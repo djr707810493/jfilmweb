@@ -1,0 +1,54 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Client inquiry attachments
+    match /submissions/{submissionId}/{fileName} {
+      allow write: if request.resource.size < 50 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*|video/.*|application/octet-stream');
+      // Read needed for getDownloadURL after upload; paths use UUIDs
+      allow read: if true;
+    }
+
+    // Portfolio media — public read, admin write
+    match /portfolio/{category}/{slug}/{fileName} {
+      allow read: if true;
+      allow write: if isStorageAdmin()
+        && request.resource.size < 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    // Story media — public read, admin write
+    match /stories/{slug}/{fileName} {
+      allow read: if true;
+      allow write: if isStorageAdmin()
+        && request.resource.size < 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    // Homepage hero carousel — public read, admin write
+    match /website/hero/{fileName} {
+      allow read: if true;
+      allow write: if isStorageAdmin()
+        && request.resource.size < 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    // Homepage The Studio portrait — public read, admin write
+    match /website/intro/{fileName} {
+      allow read: if true;
+      allow write: if isStorageAdmin()
+        && request.resource.size < 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    function isStorageAdmin() {
+      return request.auth != null
+        && request.auth.token.email is string
+        && request.auth.token.email.lower() in [
+          'hello@jfilmstudio.com',
+          'djr707810493@gmail.com',
+        ];
+    }
+  }
+}

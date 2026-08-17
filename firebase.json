@@ -1,0 +1,36 @@
+{
+  "firestore": {
+    "rules": "firebase/firestore.rules",
+    "indexes": "firebase/firestore.indexes.json"
+  },
+  "storage": {
+    "rules": "firebase/storage.rules"
+  },
+  "hosting": {
+    "site": "jfilmstudio-f53f3",
+    "public": "out",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "cleanUrls": true,
+    "redirects": [
+      { "source": "/film", "destination": "/portfolio", "type": 301 },
+      { "source": "/films", "destination": "/portfolio", "type": 301 },
+      { "source": "/gallery", "destination": "/portfolio", "type": 301 },
+      { "source": "/home", "destination": "/", "type": 301 },
+      { "source": "/investment", "destination": "/contact", "type": 301 },
+      { "source": "/pricing", "destination": "/contact", "type": 301 },
+      { "source": "/gear", "destination": "/about", "type": 301 },
+      { "source": "/wedding", "destination": "/weddings", "type": 301 },
+      { "source": "/bio", "destination": "/about", "type": 301 },
+      { "source": "/blog", "destination": "/weddings", "type": 301 },
+      { "source": "/elopment", "destination": "/weddings", "type": 301 },
+      { "source": "/elopement", "destination": "/weddings", "type": 301 },
+      { "source": "/sitemap", "destination": "/sitemap.xml", "type": 301 },
+      { "source": "/service-page/wedding-photography", "destination": "/weddings", "type": 301 },
+      { "source": "/service-page/**", "destination": "/weddings", "type": 301 }
+    ]
+  }
+}

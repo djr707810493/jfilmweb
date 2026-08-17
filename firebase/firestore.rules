@@ -1,0 +1,231 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /submissions/{submissionId} {
+      allow create: if isValidSubmissionCreate(request.resource.data);
+      allow read: if isAdmin() || (request.auth != null && canReadSubmission(resource.data));
+      allow update: if isAdmin() && isValidAdminSubmissionUpdate(resource.data, request.resource.data)
+        || (request.auth != null
+          && canReadSubmission(resource.data)
+          && isClaimSubmissionUpdate(resource.data, request.resource.data, request.auth.uid));
+      allow delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null
+        && request.auth.uid == userId
+        && isValidUserProfile(request.resource.data, request.auth.token.email);
+      allow update: if request.auth != null
+        && request.auth.uid == userId
+        && resource.data.role == 'client'
+        && isValidUserProfile(request.resource.data, request.auth.token.email);
+      allow delete: if false;
+    }
+
+    match /workOrders/{workOrderId} {
+      allow read: if isAdmin()
+        || (request.auth != null && resource.data.userId == request.auth.uid);
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.status == 'negotiating'
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.submissionId is string
+        && request.resource.data.submissionId.size() > 0
+        && request.resource.data.packageId is string
+        && request.resource.data.packageId.size() > 0
+        && request.resource.data.clientEmail is string
+        && request.resource.data.clientName is string
+        && isValidPackageSnapshot(request.resource.data.packageSnapshot)
+        && request.resource.data.packageSnapshot.id == request.resource.data.packageId;
+      allow update: if isAdmin()
+        && isValidWorkOrderAdminUpdate(resource.data, request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /portfolioProjects/{projectId} {
+      allow read: if resource.data.published == true || isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /weddingStories/{storyId} {
+      allow read: if resource.data.published == true || isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /website/{documentId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Keep in sync with NEXT_PUBLIC_ADMIN_EMAILS in .env.local
+    function adminEmails() {
+      return [
+        'hello@jfilmstudio.com',
+        'djr707810493@gmail.com',
+      ];
+    }
+
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email is string
+        && request.auth.token.email.lower() in adminEmails();
+    }
+
+    function submissionStatuses() {
+      return ['new', 'reviewing', 'reviewed', 'contacted', 'booked', 'declined', 'archived'];
+    }
+
+    function canReadSubmission(data) {
+      return request.auth != null
+        && (
+          data.userId == request.auth.uid
+          || (
+            request.auth.token.email is string
+            && data.email.lower() == request.auth.token.email.lower()
+          )
+        );
+    }
+
+    function isClaimSubmissionUpdate(before, after, uid) {
+      return request.auth.token.email is string
+        && before.email.lower() == request.auth.token.email.lower()
+        && (before.userId == null || before.userId == uid)
+        && after.userId == uid
+        && after.name == before.name
+        && after.email == before.email
+        && after.phone == before.phone
+        && after.serviceType == before.serviceType
+        && after.preferredDate == before.preferredDate
+        && after.location == before.location
+        && after.budget == before.budget
+        && after.message == before.message
+        && after.status == before.status
+        && after.attachmentUrls == before.attachmentUrls
+        && after.createdAt == before.createdAt
+        && after.quote == before.quote
+        && optionalTimestamp(after, 'linkedAt')
+        && optionalTimestamp(after, 'updatedAt');
+    }
+
+    function isValidAdminSubmissionUpdate(before, after) {
+      return isValidSubmissionFields(after)
+        && after.createdAt == before.createdAt
+        && optionalTimestamp(after, 'linkedAt')
+        && optionalTimestamp(after, 'updatedAt')
+        && optionalSubmissionUserId(after);
+    }
+
+    function isValidSubmissionCreate(data) {
+      return isValidSubmissionFields(data)
+        && data.status == 'new'
+        && optionalSubmissionUserId(data);
+    }
+
+    function isValidSubmissionFields(data) {
+      return data.keys().hasAll(['name', 'email', 'serviceType', 'message', 'status', 'createdAt'])
+        && data.name is string
+        && data.name.size() > 0
+        && data.name.size() <= 120
+        && data.email is string
+        && data.email.matches('^[A-Za-z0-9._%+\\-]+@[A-Za-z0-9.\\-]+\\.[A-Za-z]{2,}$')
+        && data.serviceType in ['photography', 'videography', 'both', 'wedding', 'elopement', 'film-digital', 'other']
+        && data.message is string
+        && data.message.size() > 0
+        && data.message.size() <= 5000
+        && data.status in submissionStatuses()
+        && data.attachmentUrls is list
+        && data.attachmentUrls.size() <= 5
+        && optionalString(data, 'phone', 40)
+        && optionalString(data, 'preferredDate', 20)
+        && optionalString(data, 'location', 200)
+        && optionalString(data, 'budget', 100)
+        && optionalQuote(data);
+    }
+
+    function optionalQuote(data) {
+      return !('quote' in data) || data.quote == null || isValidInquiryQuote(data.quote);
+    }
+
+    function isValidInquiryQuote(quote) {
+      return quote is map
+        && quote.keys().hasAll(['packages', 'status'])
+        && quote.status in ['draft', 'published']
+        && quote.packages is list
+        && quote.packages.size() <= 10
+        && optionalString(quote, 'introMessage', 2000);
+    }
+
+    function optionalTimestamp(data, field) {
+      return !(field in data) || data[field] == null || data[field] is timestamp;
+    }
+
+    function isValidUserProfile(data, authEmail) {
+      return authEmail is string
+        && data.keys().hasAll(['email', 'role', 'createdAt'])
+        && data.email is string
+        && data.email.lower() == authEmail.lower()
+        && data.role == 'client'
+        && optionalUserDisplayName(data);
+    }
+
+    function optionalUserDisplayName(data) {
+      return !('displayName' in data)
+        || data.displayName == null
+        || (data.displayName is string && data.displayName.size() <= 120);
+    }
+
+    function optionalSubmissionUserId(data) {
+      return !('userId' in data)
+        || data.userId == null
+        || (
+          request.auth != null
+          && data.userId == request.auth.uid
+          && request.auth.token.email is string
+          && data.email.lower() == request.auth.token.email.lower()
+        )
+        || isAdmin();
+    }
+
+    function optionalString(data, field, maxLen) {
+      return !(field in data) || data[field] == null
+        || (data[field] is string && data[field].size() <= maxLen);
+    }
+
+    function workOrderStatuses() {
+      return [
+        'negotiating',
+        'deposit_contract',
+        'awaiting_service',
+        'awaiting_delivery',
+        'delivered',
+        'closed',
+      ];
+    }
+
+    function isValidWorkOrderAdminUpdate(before, after) {
+      return after.submissionId == before.submissionId
+        && after.userId == before.userId
+        && after.clientEmail == before.clientEmail
+        && after.clientName == before.clientName
+        && after.packageId == before.packageId
+        && after.createdAt == before.createdAt
+        && after.status in workOrderStatuses()
+        && isValidPackageSnapshot(after.packageSnapshot)
+        && optionalString(after, 'adminNotes', 2000)
+        && optionalString(after, 'contractLink', 2000)
+        && optionalString(after, 'workDriveLink', 2000)
+        && optionalTimestamp(after, 'updatedAt');
+    }
+
+    function isValidPackageSnapshot(pkg) {
+      return pkg is map
+        && pkg.id is string
+        && pkg.name is string
+        && pkg.name.size() > 0
+        && pkg.price is string
+        && pkg.price.size() > 0;
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "jfilmstudio-f53f3"
+  },
+  "targets": {
+    "jfilmstudio-f53f3": {
+      "hosting": {
+        "production": [
+          "jfilmstudio-f53f3"
+        ]
+      }
+    }
+  }
+}
