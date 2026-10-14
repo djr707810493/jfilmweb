@@ -31,6 +31,8 @@ import type { InquiryQuote } from "@/types/inquiry-quote";
 type StatusFilter = SubmissionStatus | "all";
 type InquiryDetailTab = "details" | "quote";
 
+const INQUIRY_PAGE_SIZE = 8;
+
 type EditFormState = {
   name: string;
   email: string;
@@ -48,6 +50,7 @@ export function AdminInquiriesPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [page, setPage] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editing, setEditing] = useState<SubmissionRecord | null>(null);
   const [editForm, setEditForm] = useState<EditFormState | null>(null);
@@ -91,6 +94,13 @@ export function AdminInquiriesPanel() {
     if (statusFilter === "all") return inquiries;
     return inquiries.filter((item) => item.status === statusFilter);
   }, [inquiries, statusFilter]);
+
+  const pageCount = Math.max(1, Math.ceil(filtered.length / INQUIRY_PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount - 1);
+  const pageItems = filtered.slice(
+    currentPage * INQUIRY_PAGE_SIZE,
+    currentPage * INQUIRY_PAGE_SIZE + INQUIRY_PAGE_SIZE,
+  );
 
   const selected = filtered.find((item) => item.id === selectedId)
     ?? filtered[0]
@@ -242,14 +252,20 @@ export function AdminInquiriesPanel() {
       <div className="mt-8 flex flex-wrap gap-2">
         <FilterButton
           active={statusFilter === "all"}
-          onClick={() => setStatusFilter("all")}
+          onClick={() => {
+            setStatusFilter("all");
+            setPage(0);
+          }}
           label={`All (${inquiries.length})`}
         />
         {SUBMISSION_STATUS_OPTIONS.map((option) => (
           <FilterButton
             key={option.value}
             active={statusFilter === option.value}
-            onClick={() => setStatusFilter(option.value)}
+            onClick={() => {
+              setStatusFilter(option.value);
+              setPage(0);
+            }}
             label={`${option.label} (${stats[option.value]})`}
           />
         ))}
@@ -273,13 +289,13 @@ export function AdminInquiriesPanel() {
       )}
 
       {!loading && filtered.length > 0 && (
-        <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+        <div className="mt-8 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
           <section className="border border-taupe/40 bg-ivory-dark">
             <div className="border-b border-taupe/30 px-5 py-4">
               <p className="label-editorial">Inquiry List</p>
             </div>
-            <ul className="max-h-[32rem] divide-y divide-taupe/25 overflow-y-auto">
-              {filtered.map((inquiry) => (
+            <ul className="divide-y divide-taupe/25">
+              {pageItems.map((inquiry) => (
                 <li key={inquiry.id}>
                   <button
                     type="button"
@@ -313,6 +329,29 @@ export function AdminInquiriesPanel() {
                 </li>
               ))}
             </ul>
+            {pageCount > 1 && (
+              <div className="flex items-center justify-between gap-3 border-t border-taupe/30 px-5 py-3">
+                <button
+                  type="button"
+                  onClick={() => setPage(currentPage - 1)}
+                  disabled={currentPage === 0}
+                  className="label-editorial text-[0.625rem] text-soft-black disabled:opacity-30"
+                >
+                  Previous
+                </button>
+                <p className="text-xs text-soft-black-muted">
+                  {currentPage + 1} / {pageCount}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setPage(currentPage + 1)}
+                  disabled={currentPage >= pageCount - 1}
+                  className="label-editorial text-[0.625rem] text-soft-black disabled:opacity-30"
+                >
+                  Next
+                </button>
+              </div>
+            )}
           </section>
 
           {selected && (

@@ -3,6 +3,8 @@ export type WeddingStoryImage = {
   alt: string;
   aspect?: string;
   span?: string;
+  /** Included in the curated collection. Missing values are treated as false. */
+  curated?: boolean;
 };
 
 export type WeddingStory = {

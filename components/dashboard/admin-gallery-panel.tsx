@@ -377,6 +377,19 @@ export function AdminGalleryPanel() {
                   });
                 }}
                 onSave={handleSave}
+                onCommit={(next) => {
+                  if (isCreating || !selectedSlug) return;
+                  updatePortfolioProject(selectedSlug, {
+                    ...next,
+                    slug: next.slug.trim() || selectedSlug,
+                  }).catch((err) => {
+                    setActionError(
+                      err instanceof Error
+                        ? err.message
+                        : "Could not save the featured image.",
+                    );
+                  });
+                }}
                 onUploadState={setUploading}
               />
             </>

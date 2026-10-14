@@ -2,9 +2,24 @@
 
 import Link from "next/link";
 import { useMemo } from "react";
-import { PortfolioProjectCard } from "@/components/portfolio/portfolio-project-card";
+import { SiteImage } from "@/components/site-image";
 import { usePortfolioProjects } from "@/hooks/use-portfolio-projects";
-import { trackViewFullPortfolioClick } from "@/lib/analytics";
+import { useWeddingStories } from "@/hooks/use-wedding-stories";
+import { trackPortfolioItemClick, trackViewFullPortfolioClick } from "@/lib/analytics";
+import type { PortfolioImageMedia, PortfolioProject } from "@/types/portfolio";
+import type { WeddingStory, WeddingStoryImage } from "@/types/wedding-story";
+
+type CuratedFrame = {
+  key: string;
+  src: string;
+  alt: string;
+  width: number;
+  height: number;
+  href: string;
+  title: string;
+  location: string;
+  project?: PortfolioProject;
+};
 
 type PortfolioGridSectionProps = {
   showHeader?: boolean;
@@ -13,21 +28,19 @@ type PortfolioGridSectionProps = {
 export function PortfolioGridSection({
   showHeader = true,
 }: PortfolioGridSectionProps) {
-  const { projects } = usePortfolioProjects();
+  const { projects, loading: projectsLoading } = usePortfolioProjects();
+  const { stories, loading: storiesLoading } = useWeddingStories();
 
-  const displayProjects = useMemo(() => {
-    // 1. Get all featured projects
-    const featured = projects.filter((p) => p.featured);
-    
-    // 2. If we have less than 6 featured, get the top unfeatured ones to fill the gap
-    if (featured.length < 6) {
-      const unfeatured = projects.filter((p) => !p.featured);
-      const toAdd = unfeatured.slice(0, 6 - featured.length);
-      return [...featured, ...toAdd].slice(0, 6);
-    }
-    
-    return featured.slice(0, 6);
-  }, [projects]);
+  const frames = useMemo(
+    () => collectCuratedFrames(projects, stories),
+    [projects, stories],
+  );
+
+  const loading = projectsLoading || storiesLoading;
+
+  if (!loading && frames.length === 0) {
+    return null;
+  }
 
   return (
     <section className="section-y-compact border-b border-taupe/40">
@@ -35,9 +48,9 @@ export function PortfolioGridSection({
         {showHeader && (
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between md:gap-6">
             <div>
-              <p className="label-editorial">Selected Work</p>
+              <p className="label-editorial">Curated</p>
               <h2 className="font-display mt-2 text-[clamp(1.375rem,4.5vw,3rem)] text-soft-black md:mt-4">
-                Featured Portfolio
+                Featured Gallery
               </h2>
             </div>
             <Link
@@ -50,20 +63,113 @@ export function PortfolioGridSection({
           </div>
         )}
 
-        <div
-          className={`grid grid-cols-2 gap-x-3 gap-y-8 sm:gap-x-4 sm:gap-y-10 md:grid-cols-3 md:gap-x-6 lg:gap-x-8 ${showHeader ? "mt-6 md:mt-14" : ""}`}
-        >
-          {displayProjects.map((project, index) => (
-            <PortfolioProjectCard
-              key={project.slug}
-              project={project}
-              priority={index === 0}
-              listName="home_featured"
-              index={index}
-            />
-          ))}
-        </div>
+        {loading && frames.length === 0 ? (
+          <p className={`text-sm text-soft-black-muted ${showHeader ? "mt-6 md:mt-14" : ""}`}>
+            Loading gallery…
+          </p>
+        ) : (
+          <div
+            className={`columns-2 gap-3 md:columns-3 md:gap-5 ${showHeader ? "mt-6 md:mt-14" : ""}`}
+          >
+            {frames.map((frame, index) => (
+              <Link
+                key={frame.key}
+                href={frame.href}
+                className="group mb-3 block break-inside-avoid md:mb-5"
+                onClick={() => {
+                  if (!frame.project) return;
+                  trackPortfolioItemClick(frame.project, "home_featured", index);
+                }}
+              >
+                <figure>
+                  <div className="overflow-hidden bg-taupe/10">
+                    <SiteImage
+                      src={frame.src}
+                      alt={frame.alt}
+                      width={frame.width}
+                      height={frame.height}
+                      priority={index < 2}
+                      sizes="(max-width: 768px) 50vw, 33vw"
+                      className="h-auto w-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+                    />
+                  </div>
+                  <figcaption className="mt-2 flex items-baseline justify-between gap-3">
+                    <span className="truncate font-display text-base text-soft-black md:text-lg">
+                      {frame.title}
+                    </span>
+                    <span className="label-editorial shrink-0 text-[0.5625rem] text-taupe">
+                      {frame.location}
+                    </span>
+                  </figcaption>
+                </figure>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
+}
+
+function collectCuratedFrames(
+  projects: PortfolioProject[],
+  stories: WeddingStory[],
+): CuratedFrame[] {
+  const frames: CuratedFrame[] = [];
+  const seen = new Set<string>();
+
+  function add(frame: CuratedFrame) {
+    if (!frame.src || seen.has(frame.src)) return;
+    seen.add(frame.src);
+    frames.push(frame);
+  }
+
+  for (const project of projects) {
+    const images: PortfolioImageMedia[] = [];
+    if (project.cover.type === "image" && project.cover.curated === true) {
+      images.push(project.cover);
+    }
+    for (const item of project.media) {
+      if (item.type === "image" && item.curated === true) {
+        images.push(item);
+      }
+    }
+
+    images.forEach((image, index) => {
+      add({
+        key: `${project.slug}-${image.src}-${index}`,
+        src: image.src,
+        alt: image.alt || project.title,
+        width: image.width || 1600,
+        height: image.height || 1200,
+        href: `/portfolio/item/?slug=${project.slug}`,
+        title: project.title,
+        location: project.location,
+        project,
+      });
+    });
+  }
+
+  for (const story of stories) {
+    const images: WeddingStoryImage[] = [];
+    if (story.cover?.curated === true) images.push(story.cover);
+    for (const image of story.gallery) {
+      if (image.curated === true) images.push(image);
+    }
+
+    images.forEach((image, index) => {
+      add({
+        key: `${story.slug}-${image.src}-${index}`,
+        src: image.src,
+        alt: image.alt || story.title,
+        width: 1600,
+        height: 1200,
+        href: `/weddings/${story.slug}/`,
+        title: story.title,
+        location: story.location,
+      });
+    });
+  }
+
+  return frames;
 }

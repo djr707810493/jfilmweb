@@ -37,6 +37,7 @@ function serializeMedia(media: PortfolioMedia) {
       title: media.title ?? null,
       width: media.width,
       height: media.height,
+      curated: media.curated === true,
     };
   }
 
@@ -60,6 +61,7 @@ function deserializeMedia(data: Record<string, unknown>): PortfolioMedia | null 
       title: data.title ? String(data.title) : undefined,
       width: Number(data.width ?? 1600),
       height: Number(data.height ?? 1200),
+      curated: data.curated === true,
     };
   }
 

@@ -28,10 +28,11 @@ function timestampToDate(value: unknown): Date | null {
   return null;
 }
 
-function serializeImage(image: WeddingStoryImage): Record<string, string> {
-  const result: Record<string, string> = {
+function serializeImage(image: WeddingStoryImage): Record<string, string | boolean> {
+  const result: Record<string, string | boolean> = {
     src: image.src,
     alt: image.alt,
+    curated: image.curated === true,
   };
   if (image.span) result.span = image.span;
   if (image.aspect) result.aspect = image.aspect;
@@ -44,6 +45,7 @@ function deserializeImage(data: Record<string, unknown>): WeddingStoryImage {
     alt: String(data.alt ?? ""),
     span: data.span ? String(data.span) : undefined,
     aspect: data.aspect ? String(data.aspect) : undefined,
+    curated: data.curated === true,
   };
 }
 

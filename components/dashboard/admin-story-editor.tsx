@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import {
   dashboardInputClass,
 } from "@/components/dashboard/dashboard-layout";
+import { GalleryTileActions } from "@/components/dashboard/gallery-tile-actions";
 import { MediaLibraryPicker } from "@/components/dashboard/media-library-picker";
 import { uploadStoryImage } from "@/lib/firebase/storage";
 import { formatCompressionSummary, imageCompressionHint } from "@/lib/image-compress";
@@ -18,6 +19,7 @@ type AdminStoryEditorProps = {
   saving: boolean;
   uploading: boolean;
   onChange: (value: WeddingStoryInput) => void;
+  onCommit?: (value: WeddingStoryInput) => void;
   onSave: () => void;
   onUploadState: (uploading: boolean) => void;
 };
@@ -28,6 +30,7 @@ export function AdminStoryEditor({
   saving,
   uploading,
   onChange,
+  onCommit,
   onSave,
   onUploadState,
 }: AdminStoryEditorProps) {
@@ -355,6 +358,16 @@ export function AdminStoryEditor({
                 total={value.gallery.length}
                 onMoveEarlier={() => moveGalleryItem(index, index - 1)}
                 onMoveLater={() => moveGalleryItem(index, index + 1)}
+                onToggleCurated={() => {
+                  const nextGallery = value.gallery.map((image, imageIndex) =>
+                    imageIndex === index
+                      ? { ...image, curated: image.curated !== true }
+                      : image,
+                  );
+                  const next = { ...value, gallery: nextGallery };
+                  onChange(next);
+                  onCommit?.(next);
+                }}
                 onRemove={() => removeGalleryItem(index)}
               />
             ))}
@@ -513,6 +526,7 @@ function GalleryMediaTile({
   total,
   onMoveEarlier,
   onMoveLater,
+  onToggleCurated,
   onRemove,
 }: {
   item: WeddingStoryImage;
@@ -520,6 +534,7 @@ function GalleryMediaTile({
   total: number;
   onMoveEarlier: () => void;
   onMoveLater: () => void;
+  onToggleCurated: () => void;
   onRemove: () => void;
 }) {
   return (
@@ -541,46 +556,19 @@ function GalleryMediaTile({
         {index + 1}
       </span>
 
-      <div className="absolute inset-x-0 bottom-0 flex translate-y-full gap-0.5 bg-soft-black/75 p-1 transition-transform duration-200 group-hover:translate-y-0 group-focus-within:translate-y-0">
-        <TileActionButton
-          label="←"
-          disabled={index === 0}
-          onClick={onMoveEarlier}
-        />
-        <TileActionButton
-          label="→"
-          disabled={index === total - 1}
-          onClick={onMoveLater}
-        />
-        <TileActionButton
-          label="×"
-          onClick={onRemove}
-          className="text-red-200 hover:text-red-100"
-        />
-      </div>
+      <GalleryTileActions
+        previewSrc={item.src}
+        previewAlt={item.alt}
+        canMoveEarlier={index > 0}
+        canMoveLater={index < total - 1}
+        curated={item.curated === true}
+        showCurated
+        onMoveEarlier={onMoveEarlier}
+        onMoveLater={onMoveLater}
+        onRemove={onRemove}
+        onToggleCurated={onToggleCurated}
+      />
     </div>
   );
 }
 
-function TileActionButton({
-  label,
-  disabled,
-  onClick,
-  className = "",
-}: {
-  label: string;
-  disabled?: boolean;
-  onClick: () => void;
-  className?: string;
-}) {
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={onClick}
-      className={`min-w-0 flex-1 px-1 py-1 text-[10px] text-ivory disabled:opacity-30 ${className}`}
-    >
-      {label}
-    </button>
-  );
-}

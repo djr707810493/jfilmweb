@@ -368,6 +368,19 @@ export function AdminStoriesPanel() {
                   });
                 }}
                 onSave={handleSave}
+                onCommit={(next) => {
+                  if (isCreating || !selectedSlug) return;
+                  updateWeddingStory(selectedSlug, {
+                    ...next,
+                    slug: next.slug.trim() || selectedSlug,
+                  }).catch((err) => {
+                    setActionError(
+                      err instanceof Error
+                        ? err.message
+                        : "Could not save the featured image.",
+                    );
+                  });
+                }}
                 onUploadState={setUploading}
               />
             </>

@@ -5,6 +5,7 @@ import {
   dashboardInputClass,
   dashboardSelectClass,
 } from "@/components/dashboard/dashboard-layout";
+import { GalleryTileActions } from "@/components/dashboard/gallery-tile-actions";
 import { uploadPortfolioImage } from "@/lib/firebase/storage";
 import { formatCompressionSummary, imageCompressionHint } from "@/lib/image-compress";
 import { isValidVideoEmbedUrl, getVideoPosterUrl } from "@/lib/video-embed";
@@ -28,6 +29,7 @@ type AdminPortfolioEditorProps = {
   saving: boolean;
   uploading: boolean;
   onChange: (value: PortfolioProjectInput) => void;
+  onCommit?: (value: PortfolioProjectInput) => void;
   onSave: () => void;
   onUploadState: (uploading: boolean) => void;
 };
@@ -38,6 +40,7 @@ export function AdminPortfolioEditor({
   saving,
   uploading,
   onChange,
+  onCommit,
   onSave,
   onUploadState,
 }: AdminPortfolioEditorProps) {
@@ -553,6 +556,20 @@ export function AdminPortfolioEditor({
                 }
                 onMoveEarlier={() => moveMediaItem(index, index - 1)}
                 onMoveLater={() => moveMediaItem(index, index + 1)}
+                onToggleCurated={
+                  item.type === "image"
+                    ? () => {
+                        const nextMedia = value.media.map((media, mediaIndex) =>
+                          mediaIndex === index && media.type === "image"
+                            ? { ...media, curated: media.curated !== true }
+                            : media,
+                        );
+                        const next = { ...value, media: nextMedia };
+                        onChange(next);
+                        onCommit?.(next);
+                      }
+                    : undefined
+                }
                 onRemove={() => removeMediaItem(index)}
               />
             ))}
@@ -691,6 +708,7 @@ function GalleryMediaTile({
   onEditVideo,
   onMoveEarlier,
   onMoveLater,
+  onToggleCurated,
   onRemove,
 }: {
   item: PortfolioMedia;
@@ -700,6 +718,7 @@ function GalleryMediaTile({
   onEditVideo: () => void;
   onMoveEarlier: () => void;
   onMoveLater: () => void;
+  onToggleCurated?: () => void;
   onRemove: () => void;
 }) {
   const previewSrc =
@@ -738,7 +757,7 @@ function GalleryMediaTile({
             Film
           </span>
           {previewSrc && (
-            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center transition-opacity duration-200 group-hover:opacity-0 group-focus-within:opacity-0">
               <span className="flex size-8 items-center justify-center bg-soft-black/35 backdrop-blur-sm">
                 <PlayIcon className="size-3.5 fill-ivory text-ivory" />
               </span>
@@ -751,54 +770,20 @@ function GalleryMediaTile({
         {index + 1}
       </span>
 
-      <div className="absolute inset-x-0 bottom-0 flex translate-y-full gap-0.5 bg-soft-black/75 p-1 transition-transform duration-200 group-hover:translate-y-0 group-focus-within:translate-y-0">
-        {isVideo && (
-          <TileActionButton
-            label="Edit"
-            onClick={onEditVideo}
-            className={isEditing ? "bg-ivory/20" : ""}
-          />
-        )}
-        <TileActionButton
-          label="←"
-          disabled={index === 0}
-          onClick={onMoveEarlier}
-        />
-        <TileActionButton
-          label="→"
-          disabled={index === total - 1}
-          onClick={onMoveLater}
-        />
-        <TileActionButton
-          label="×"
-          onClick={onRemove}
-          className="text-red-200 hover:text-red-100"
-        />
-      </div>
+      <GalleryTileActions
+        previewSrc={previewSrc}
+        previewAlt={item.alt}
+        canMoveEarlier={index > 0}
+        canMoveLater={index < total - 1}
+        curated={item.type === "image" && item.curated === true}
+        showCurated={Boolean(onToggleCurated)}
+        onMoveEarlier={onMoveEarlier}
+        onMoveLater={onMoveLater}
+        onRemove={onRemove}
+        onToggleCurated={onToggleCurated}
+        onEdit={isVideo ? onEditVideo : undefined}
+      />
     </div>
-  );
-}
-
-function TileActionButton({
-  label,
-  disabled,
-  onClick,
-  className = "",
-}: {
-  label: string;
-  disabled?: boolean;
-  onClick: () => void;
-  className?: string;
-}) {
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={onClick}
-      className={`min-w-0 flex-1 px-1 py-1 text-[10px] text-ivory disabled:opacity-30 ${className}`}
-    >
-      {label}
-    </button>
   );
 }
 

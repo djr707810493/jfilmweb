@@ -12,6 +12,8 @@ export interface PortfolioImageMedia extends PortfolioMediaBase {
   src: string;
   width: number;
   height: number;
+  /** Included in the curated collection. Missing values are treated as false. */
+  curated?: boolean;
 }
 
 export interface PortfolioVideoMedia extends PortfolioMediaBase {
