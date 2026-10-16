@@ -11,24 +11,31 @@ import {
   formatCompressionSummary,
   imageCompressionHint,
 } from "@/lib/image-compress";
-import { uploadHeroImage, uploadIntroImage } from "@/lib/firebase/storage";
+import { uploadCoveragePoster, uploadCoverageVideo, uploadHeroImage, uploadIntroImage } from "@/lib/firebase/storage";
 import {
+  createDefaultCoverageVideo,
   createDefaultHeroSlide,
   createDefaultIntroImage,
   createHeroButton,
   createHeroSlide,
+  getCoverageVideo,
   getHeroSettings,
   getIntroImage,
   HERO_MAX_BUTTONS,
+  saveCoverageVideo,
   saveHeroSettings,
   saveIntroImage,
 } from "@/lib/firebase/website";
-import type { HeroButton, HeroCopy, HeroSlide, IntroImage } from "@/types/website";
+import { isDirectVideoFileUrl, isValidVideoEmbedUrl } from "@/lib/video-embed";
+import type { CoverageVideo, HeroButton, HeroCopy, HeroSlide, IntroImage } from "@/types/website";
 
 export function AdminWebsitePanel() {
   const [slides, setSlides] = useState<HeroSlide[]>([]);
   const [expandedSlideId, setExpandedSlideId] = useState<string | null>(null);
   const [introImage, setIntroImage] = useState<IntroImage>(createDefaultIntroImage());
+  const [coverageVideo, setCoverageVideo] = useState<CoverageVideo>(createDefaultCoverageVideo());
+  const [coverageSaving, setCoverageSaving] = useState(false);
+  const [coverageUploading, setCoverageUploading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -41,18 +48,21 @@ export function AdminWebsitePanel() {
     setLoading(true);
     setError("");
     try {
-      const [hero, intro] = await Promise.all([
+      const [hero, intro, coverage] = await Promise.all([
         getHeroSettings(),
         getIntroImage(),
+        getCoverageVideo(),
       ]);
       const nextSlides =
         hero.slides.length > 0 ? hero.slides : [createDefaultHeroSlide()];
       setSlides(nextSlides);
       setIntroImage(intro);
+      setCoverageVideo(coverage);
     } catch {
       setError("Could not load website settings. Check admin access and Firestore rules.");
       setSlides([createDefaultHeroSlide()]);
       setIntroImage(createDefaultIntroImage());
+      setCoverageVideo(createDefaultCoverageVideo());
     } finally {
       setLoading(false);
     }
@@ -317,7 +327,75 @@ export function AdminWebsitePanel() {
     }
   }
 
-  const busy = saving || uploading || introUploading;
+  async function handleSaveCoverage() {
+    const src = coverageVideo.src.trim();
+    if (src && !isValidVideoEmbedUrl(src) && !isDirectVideoFileUrl(src)) {
+      setError("Coverage video must be a YouTube/Vimeo link or an uploaded mp4/webm file.");
+      return;
+    }
+    setCoverageSaving(true);
+    setError("");
+    try {
+      await saveCoverageVideo(coverageVideo);
+      setStatus("Coverage video saved. It now shows above the package cards.");
+    } catch {
+      setError("Could not save coverage video.");
+    } finally {
+      setCoverageSaving(false);
+    }
+  }
+
+  async function handleUploadCoverageVideo(file: File) {
+    setError("");
+    setCoverageUploading(true);
+    setStatus(`Uploading ${file.name}…`);
+    try {
+      const url = await uploadCoverageVideo(file, (progress) => {
+        setStatus(`Uploading ${file.name}… ${progress}%`);
+      });
+      const next = { ...coverageVideo, src: url };
+      setCoverageVideo(next);
+      await saveCoverageVideo(next);
+      setStatus("Coverage video uploaded and saved.");
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Video upload failed.");
+    } finally {
+      setCoverageUploading(false);
+    }
+  }
+
+  async function handleUploadCoveragePoster(file: File) {
+    setError("");
+    setCoverageUploading(true);
+    try {
+      const result = await uploadCoveragePoster(file);
+      const next = { ...coverageVideo, poster: result.url };
+      setCoverageVideo(next);
+      await saveCoverageVideo(next);
+      setStatus("Coverage poster saved.");
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Poster upload failed.");
+    } finally {
+      setCoverageUploading(false);
+    }
+  }
+
+  async function handleRemoveCoverage() {
+    setError("");
+    setCoverageSaving(true);
+    try {
+      const next = createDefaultCoverageVideo();
+      setCoverageVideo(next);
+      await saveCoverageVideo(next);
+      setStatus("Coverage video removed.");
+    } catch {
+      setError("Could not remove coverage video.");
+    } finally {
+      setCoverageSaving(false);
+    }
+  }
+
+  const busy = saving || uploading || introUploading || coverageSaving || coverageUploading;
 
   return (
     <div>
@@ -697,6 +775,119 @@ export function AdminWebsitePanel() {
                   </button>
                 </div>
               </div>
+            </div>
+          </section>
+
+          <section className="space-y-4 border-t border-taupe/30 pt-10">
+            <h2 className="label-editorial text-soft-black">Coverage video</h2>
+            <p className="text-xs leading-relaxed text-soft-black-muted">
+              Explains the package differences. Shows above the coverage cards on the homepage. Paste a YouTube/Vimeo link or upload an mp4 (under 200MB). {imageCompressionHint()}
+            </p>
+
+            <label className="block text-sm text-soft-black">
+              <span className="label-editorial text-soft-black">Video URL</span>
+              <span className="mt-1 block text-xs text-soft-black-muted">YouTube, Vimeo, or uploaded mp4/webm URL</span>
+              <input
+                value={coverageVideo.src}
+                onChange={(event) =>
+                  setCoverageVideo((current) => ({ ...current, src: event.target.value }))
+                }
+                placeholder="https://www.youtube.com/watch?v=…"
+                className={dashboardInputClass}
+              />
+            </label>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block text-sm text-soft-black">
+                <span className="label-editorial text-soft-black">Caption (optional)</span>
+                <input
+                  value={coverageVideo.title}
+                  onChange={(event) =>
+                    setCoverageVideo((current) => ({ ...current, title: event.target.value }))
+                  }
+                  placeholder="What makes each package different"
+                  maxLength={120}
+                  className={dashboardInputClass}
+                />
+              </label>
+              <label className="block text-sm text-soft-black">
+                <span className="label-editorial text-soft-black">Poster URL (optional)</span>
+                <input
+                  value={coverageVideo.poster}
+                  onChange={(event) =>
+                    setCoverageVideo((current) => ({ ...current, poster: event.target.value }))
+                  }
+                  placeholder="Cover frame shown before play"
+                  className={dashboardInputClass}
+                />
+              </label>
+            </div>
+
+            {coverageVideo.src ? (
+              <div className="relative aspect-video max-w-xl overflow-hidden border border-taupe/30 bg-taupe/10">
+                {coverageVideo.poster ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={coverageVideo.poster} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <video src={coverageVideo.src} className="h-full w-full object-cover" muted playsInline preload="metadata" />
+                )}
+                <span className="label-editorial absolute bottom-2 left-2 bg-soft-black/60 px-2 py-1 text-[10px] text-ivory">Preview</span>
+              </div>
+            ) : (
+              <p className="text-sm text-soft-black-muted">No coverage video yet — the homepage skips this block until you add one.</p>
+            )}
+
+            <div className="flex flex-wrap gap-3">
+              <label className="inline-flex cursor-pointer items-center">
+                <span className="label-editorial border border-taupe/40 bg-ivory px-4 py-2.5 text-soft-black">
+                  {coverageUploading ? "Uploading…" : "Upload video"}
+                </span>
+                <input
+                  type="file"
+                  accept="video/mp4,video/webm,video/quicktime"
+                  disabled={busy}
+                  className="sr-only"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (file) handleUploadCoverageVideo(file).catch(() => undefined);
+                    event.target.value = "";
+                  }}
+                />
+              </label>
+              <label className="inline-flex cursor-pointer items-center">
+                <span className="label-editorial border border-taupe/40 bg-ivory px-4 py-2.5 text-soft-black">
+                  Upload poster
+                </span>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+                  disabled={busy}
+                  className="sr-only"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (file) handleUploadCoveragePoster(file).catch(() => undefined);
+                    event.target.value = "";
+                  }}
+                />
+              </label>
+              <button
+                type="button"
+                onClick={() => handleSaveCoverage()}
+                disabled={busy}
+                className="label-editorial min-h-[2.75rem] border border-soft-black bg-soft-black px-6 py-2.5 text-ivory disabled:opacity-40"
+              >
+                {coverageSaving ? "Saving…" : "Save video"}
+              </button>
+              {coverageVideo.src ? (
+                <button
+                  type="button"
+                  onClick={() => handleRemoveCoverage()}
+                  disabled={busy}
+                  className="label-editorial min-h-[2.75rem] border border-taupe/40 px-4 py-2.5 text-soft-black-muted disabled:opacity-40"
+                >
+                  Remove
+                </button>
+              ) : null}
             </div>
           </section>
 

@@ -8,6 +8,7 @@ import {
 import { getFirestoreDb } from "@/lib/firebase";
 import { heroContent, introContent } from "@/data/homepage";
 import type {
+  CoverageVideo,
   HeroButton,
   HeroCopy,
   HeroSettings,
@@ -18,6 +19,7 @@ import type {
 const COLLECTION = "website";
 const HERO_DOC = "hero";
 const INTRO_DOC = "intro";
+const COVERAGE_DOC = "coverage";
 export const HERO_INTERVAL_MS = 5000;
 export const HERO_MAX_BUTTONS = 3;
 
@@ -271,6 +273,40 @@ export async function saveIntroImage(image: IntroImage): Promise<void> {
       alt: image.alt.trim() || fallback.alt,
       width: Number(image.width) || fallback.width,
       height: Number(image.height) || fallback.height,
+      updatedAt: serverTimestamp(),
+    },
+    { merge: true },
+  );
+}
+
+export function createDefaultCoverageVideo(): CoverageVideo {
+  return { src: "", poster: "", title: "" };
+}
+
+export async function getCoverageVideo(): Promise<CoverageVideo> {
+  const db = getFirestoreDb();
+  const snapshot = await getDoc(doc(db, COLLECTION, COVERAGE_DOC));
+  const fallback = createDefaultCoverageVideo();
+
+  if (!snapshot.exists()) return fallback;
+
+  const data = snapshot.data() as Record<string, unknown>;
+  return {
+    src: String(data.src ?? "").trim(),
+    poster: String(data.poster ?? "").trim(),
+    title: String(data.title ?? "").trim() || fallback.title,
+  };
+}
+
+export async function saveCoverageVideo(video: CoverageVideo): Promise<void> {
+  const db = getFirestoreDb();
+
+  await setDoc(
+    doc(db, COLLECTION, COVERAGE_DOC),
+    {
+      src: video.src.trim(),
+      poster: video.poster.trim(),
+      title: video.title.trim(),
       updatedAt: serverTimestamp(),
     },
     { merge: true },

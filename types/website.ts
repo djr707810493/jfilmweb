@@ -36,3 +36,9 @@ export type HeroCarouselSettings = {
   slides: HeroSlide[];
   intervalMs: number;
 };
+
+export type CoverageVideo = {
+  src: string;
+  poster: string;
+  title: string;
+};

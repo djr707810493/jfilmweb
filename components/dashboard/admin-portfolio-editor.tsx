@@ -556,20 +556,7 @@ export function AdminPortfolioEditor({
                 }
                 onMoveEarlier={() => moveMediaItem(index, index - 1)}
                 onMoveLater={() => moveMediaItem(index, index + 1)}
-                onToggleCurated={
-                  item.type === "image"
-                    ? () => {
-                        const nextMedia = value.media.map((media, mediaIndex) =>
-                          mediaIndex === index && media.type === "image"
-                            ? { ...media, curated: media.curated !== true }
-                            : media,
-                        );
-                        const next = { ...value, media: nextMedia };
-                        onChange(next);
-                        onCommit?.(next);
-                      }
-                    : undefined
-                }
+                onToggleCurated={undefined}
                 onRemove={() => removeMediaItem(index)}
               />
             ))}

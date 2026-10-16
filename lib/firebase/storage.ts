@@ -168,6 +168,46 @@ export async function uploadIntroImage(
   return finishCompressedUpload(path, compressed, onProgress);
 }
 
+const MAX_COVERAGE_VIDEO_BYTES = 200 * 1024 * 1024;
+
+export function validateCoverageVideoFile(file: File): string | null {
+  const type = resolveContentType(file);
+  if (!type.startsWith("video/")) {
+    return "Please choose a video file (mp4, webm, or mov).";
+  }
+  if (file.size > MAX_COVERAGE_VIDEO_BYTES) {
+    return "Video must be under 200MB. For larger films, paste a YouTube or Vimeo link instead.";
+  }
+  return null;
+}
+
+export async function uploadCoverageVideo(
+  file: File,
+  onProgress?: (progress: number) => void,
+): Promise<string> {
+  const invalid = validateCoverageVideoFile(file);
+  if (invalid) throw new Error(invalid);
+  const storage = getFirebaseStorage();
+  const path = `website/coverage/${Date.now()}-${sanitizeFileName(file.name)}`;
+  const storageRef = ref(storage, path);
+  return uploadWithProgress(storageRef, file, onProgress);
+}
+
+export async function uploadCoveragePoster(
+  file: File,
+  onProgress?: (progress: number) => void,
+): Promise<{
+  url: string;
+  width: number;
+  height: number;
+  compressedSize: number;
+  skippedCompression: boolean;
+}> {
+  const compressed = await prepareCompressedImage(file, onProgress);
+  const path = `website/coverage/${Date.now()}-${sanitizeFileName(compressed.file.name)}`;
+  return finishCompressedUpload(path, compressed, onProgress);
+}
+
 async function prepareCompressedImage(
   file: File,
   onProgress?: (progress: number) => void,

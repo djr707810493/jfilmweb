@@ -222,6 +222,7 @@ export function AdminGalleryPanel() {
         <DashboardStat label="With Film" value={stats.film} />
       </div>
 
+      <>
       {error && (
         <p className="mb-4 text-sm text-red-700" role="alert">
           {error}
@@ -404,6 +405,7 @@ export function AdminGalleryPanel() {
           )}
         </div>
       </div>
+      </>
     </div>
   );
 }

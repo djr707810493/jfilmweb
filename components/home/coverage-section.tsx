@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { PortfolioVideo } from "@/components/portfolio/portfolio-video";
 import { coverageContent, coverageOptions } from "@/data/homepage";
 import { trackCoverageInquire } from "@/lib/analytics";
+import { getCoverageVideo } from "@/lib/firebase/website";
 
 function CrewMarks({ count }: { count: number }) {
   return (
@@ -18,6 +21,25 @@ function CrewMarks({ count }: { count: number }) {
 }
 
 export function CoverageSection() {
+  const [videoSrc, setVideoSrc] = useState("");
+  const [videoPoster, setVideoPoster] = useState("");
+  const [videoTitle, setVideoTitle] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    getCoverageVideo()
+      .then((video) => {
+        if (cancelled || !video.src) return;
+        setVideoSrc(video.src);
+        setVideoPoster(video.poster);
+        setVideoTitle(video.title);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <section
       id="coverage"
@@ -33,6 +55,25 @@ export function CoverageSection() {
             {coverageContent.body}
           </p>
         </div>
+
+        {videoSrc ? (
+          <div className="mt-8 md:mt-12">
+            <PortfolioVideo
+              media={{
+                type: "video",
+                src: videoSrc,
+                poster: videoPoster,
+                alt: videoTitle || "Coverage packages explained",
+                title: videoTitle || undefined,
+              }}
+              layout="facade"
+              className="border border-taupe/40"
+            />
+            {videoTitle ? (
+              <p className="label-editorial mt-3 text-taupe">{videoTitle}</p>
+            ) : null}
+          </div>
+        ) : null}
 
         <div className="mt-8 grid gap-3 sm:mt-10 sm:grid-cols-3 sm:gap-4 md:mt-14 md:gap-6">
           {coverageOptions.map((option) => (
