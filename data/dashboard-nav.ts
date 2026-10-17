@@ -6,6 +6,7 @@ export type DashboardSectionId =
   | "gallery"
   | "stories"
   | "website"
+  | "quote"
   | "work"
   | "messages";
 
@@ -52,6 +53,13 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
     label: "Website",
     href: "/studio/dashboard/website",
     description: "Homepage hero carousel and site content",
+    roles: ["admin"],
+  },
+  {
+    id: "quote",
+    label: "Quote",
+    href: "/studio/dashboard/quote",
+    description: "Instant quote rates, add-ons, and rules",
     roles: ["admin"],
   },
   {

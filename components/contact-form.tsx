@@ -1,13 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { InquiryRegistrationPanel } from "@/components/auth/inquiry-registration-panel";
 import { useAuth } from "@/contexts/auth-provider";
 import { isFirebaseConfigured } from "@/lib/firebase";
 import emailjs from "@emailjs/browser";
 import { createSubmission } from "@/lib/firebase/submissions";
 import { uploadSubmissionMedia, validateMediaFile } from "@/lib/firebase/storage";
+import {
+  QUOTE_ESTIMATE_EVENT,
+  clearQuoteEstimate,
+  formatQuoteMessage,
+  readQuoteEstimate,
+  type QuoteEstimate,
+} from "@/components/quote/quote-session";
+import { formatUSD } from "@/components/quote/quote-config";
 import { siteConfig } from "@/data/site";
 import {
   MAX_ATTACHMENT_COUNT,
@@ -15,6 +23,17 @@ import {
   type ServiceType,
   type SubmissionInput,
 } from "@/types/submission";
+
+const CATEGORY_TO_SERVICE_TYPE: Record<string, ServiceType> = {
+  photo: "photography",
+  video: "videography",
+  "duo-1": "both",
+  "duo-2": "both",
+};
+
+function serviceTypeFromQuote(categoryId: string): ServiceType | null {
+  return CATEGORY_TO_SERVICE_TYPE[categoryId] ?? null;
+}
 
 type FormState = SubmissionInput;
 
@@ -47,8 +66,41 @@ export function ContactForm({ embedded = false }: { embedded?: boolean }) {
   const [uploadLabel, setUploadLabel] = useState("");
   const [successData, setSuccessData] = useState<SuccessData | null>(null);
   const [registrationSkipped, setRegistrationSkipped] = useState(false);
+  const [attachedQuote, setAttachedQuote] = useState<QuoteEstimate | null>(null);
+  const [dateUnknown, setDateUnknown] = useState(false);
 
   const firebaseReady = isFirebaseConfigured();
+
+  // Prefill from the instant quote tool (session storage + live event).
+  useEffect(() => {
+    function applyEstimate() {
+      const estimate = readQuoteEstimate();
+      if (!estimate) return;
+
+      setAttachedQuote(estimate);
+      setForm((prev) => {
+        const fromQuote = serviceTypeFromQuote(estimate.categoryId);
+        const next: FormState = {
+          ...prev,
+          budget: prev.budget || `Around ${formatUSD(estimate.budget)}`,
+          preferredDate: prev.preferredDate || estimate.date,
+          location: prev.location || estimate.location,
+        };
+        if (fromQuote) next.serviceType = fromQuote;
+        if (estimate.date) {
+          setDateUnknown(false);
+        }
+        const summary = formatQuoteMessage(estimate);
+        next.message = prev.message ? `${prev.message}\n\n${summary}` : summary;
+        return next;
+      });
+      clearQuoteEstimate();
+    }
+
+    applyEstimate();
+    window.addEventListener(QUOTE_ESTIMATE_EVENT, applyEstimate);
+    return () => window.removeEventListener(QUOTE_ESTIMATE_EVENT, applyEstimate);
+  }, []);
 
   function updateField<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -77,6 +129,8 @@ export function ContactForm({ embedded = false }: { embedded?: boolean }) {
     setFiles([]);
     setErrorMessage("");
     setUploadLabel("");
+    setDateUnknown(false);
+    setAttachedQuote(null);
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -113,8 +167,11 @@ export function ContactForm({ embedded = false }: { embedded?: boolean }) {
       }
 
       setUploadLabel("Saving inquiry…");
+      const messageWithNote = dateUnknown
+        ? `${form.message}\n\n(Date not confirmed yet — flexible on timing.)`
+        : form.message;
       await createSubmission(
-        form,
+        { ...form, message: messageWithNote },
         attachmentUrls,
         submissionId,
         user?.uid ?? null,
@@ -132,10 +189,15 @@ export function ContactForm({ embedded = false }: { embedded?: boolean }) {
             reply_to: submittedEmail,
             phone: form.phone || "Not provided",
             service_type: form.serviceType,
-            preferred_date: form.preferredDate || "Not provided",
+            preferred_date:
+              form.preferredDate ||
+              (dateUnknown ? "Not confirmed yet" : "Not provided"),
             location: form.location || "Not provided",
             budget: form.budget || "Not provided",
-            message: form.message,
+            message: messageWithNote,
+            instant_quote: attachedQuote
+              ? `${attachedQuote.categoryLabel} · ${attachedQuote.hours}h · budget ${formatUSD(attachedQuote.budget)}`
+              : "None",
           },
           process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY || "public_key"
         );
@@ -152,6 +214,8 @@ export function ContactForm({ embedded = false }: { embedded?: boolean }) {
       setStatus("success");
       setForm(initialForm);
       setFiles([]);
+      setUploadLabel("");
+      setAttachedQuote(null);
       setUploadLabel("");
     } catch (error) {
       setStatus("error");
@@ -237,6 +301,54 @@ export function ContactForm({ embedded = false }: { embedded?: boolean }) {
         </div>
       )}
 
+      {attachedQuote && (
+        <div className="mb-8 border border-soft-black bg-ivory-dark p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="label-editorial text-soft-black">Your instant quote</p>
+              <p className="mt-1.5 text-sm text-soft-black">
+                {attachedQuote.categoryLabel} · {attachedQuote.hours}h ·{" "}
+                {formatUSD(attachedQuote.budget)} budget
+              </p>
+              {attachedQuote.packages.length > 0 && (
+                <ul className="mt-2 space-y-0.5 text-xs text-soft-black-muted">
+                  {attachedQuote.packages.map((pkg) => (
+                    <li key={pkg.name}>
+                      {pkg.name} — {formatUSD(pkg.price)}
+                      {pkg.recommended ? " (recommended)" : ""}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {attachedQuote.addOnLabels.length > 0 && (
+                <p className="mt-2 text-xs text-soft-black-muted">
+                  Add-ons: {attachedQuote.addOnLabels.join(", ")}
+                </p>
+              )}
+              <p className="mt-2 text-xs text-soft-black-muted">
+                These details were added to your message — edit them freely.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setAttachedQuote(null);
+                setForm((prev) => {
+                  const marker = "— Instant quote details —";
+                  const index = prev.message.indexOf(marker);
+                  const withoutQuote =
+                    index === -1 ? prev.message : prev.message.slice(0, index);
+                  return { ...prev, message: withoutQuote.trimEnd() };
+                });
+              }}
+              className="label-editorial text-soft-black-muted underline"
+            >
+              Remove
+            </button>
+          </div>
+        </div>
+      )}
+
       {user && (
         <div className="mb-8 border border-taupe/40 bg-ivory-dark px-4 py-3 text-sm text-soft-black-muted">
           Signed in as{" "}
@@ -303,8 +415,22 @@ export function ContactForm({ embedded = false }: { embedded?: boolean }) {
               type="date"
               value={form.preferredDate}
               onChange={(e) => updateField("preferredDate", e.target.value)}
-              className={inputClass}
+              disabled={dateUnknown}
+              className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-50`}
             />
+            <label className="mt-2 flex items-center gap-2 text-xs text-soft-black-muted">
+              <input
+                type="checkbox"
+                checked={dateUnknown}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setDateUnknown(checked);
+                  if (checked) updateField("preferredDate", "");
+                }}
+                className="size-4 accent-soft-black"
+              />
+              I haven&apos;t confirmed my date yet
+            </label>
           </Field>
 
           <Field label="Location">
@@ -318,10 +444,11 @@ export function ContactForm({ embedded = false }: { embedded?: boolean }) {
           </Field>
         </div>
 
-        <Field label="Budget Range">
+        <Field label="Budget Range" required>
           <input
             type="text"
-            placeholder="Optional"
+            required
+            placeholder="e.g. $2,000 – $2,500"
             value={form.budget}
             onChange={(e) => updateField("budget", e.target.value)}
             className={inputClass}

@@ -20,6 +20,7 @@ const COLLECTION = "website";
 const HERO_DOC = "hero";
 const INTRO_DOC = "intro";
 const COVERAGE_DOC = "coverage";
+const QUOTE_VIDEO_DOC = "quote-video";
 export const HERO_INTERVAL_MS = 5000;
 export const HERO_MAX_BUTTONS = 3;
 
@@ -303,6 +304,36 @@ export async function saveCoverageVideo(video: CoverageVideo): Promise<void> {
 
   await setDoc(
     doc(db, COLLECTION, COVERAGE_DOC),
+    {
+      src: video.src.trim(),
+      poster: video.poster.trim(),
+      title: video.title.trim(),
+      updatedAt: serverTimestamp(),
+    },
+    { merge: true },
+  );
+}
+
+export async function getQuoteVideo(): Promise<CoverageVideo> {
+  const db = getFirestoreDb();
+  const snapshot = await getDoc(doc(db, COLLECTION, QUOTE_VIDEO_DOC));
+  const fallback = createDefaultCoverageVideo();
+
+  if (!snapshot.exists()) return fallback;
+
+  const data = snapshot.data() as Record<string, unknown>;
+  return {
+    src: String(data.src ?? "").trim(),
+    poster: String(data.poster ?? "").trim(),
+    title: String(data.title ?? "").trim() || fallback.title,
+  };
+}
+
+export async function saveQuoteVideo(video: CoverageVideo): Promise<void> {
+  const db = getFirestoreDb();
+
+  await setDoc(
+    doc(db, COLLECTION, QUOTE_VIDEO_DOC),
     {
       src: video.src.trim(),
       poster: video.poster.trim(),

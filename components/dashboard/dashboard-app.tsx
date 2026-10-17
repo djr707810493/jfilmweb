@@ -8,6 +8,7 @@ import { AdminGalleryPanel } from "@/components/dashboard/admin-gallery-panel";
 import { AdminInquiriesPanel } from "@/components/dashboard/admin-dashboard";
 import { AdminStoriesPanel } from "@/components/dashboard/admin-stories-panel";
 import { AdminWebsitePanel } from "@/components/dashboard/admin-website-panel";
+import { AdminQuotePanel } from "@/components/dashboard/admin-quote-panel";
 import { AdminWorkPanel } from "@/components/dashboard/admin-work-panel";
 import { ClientInquiriesPanel } from "@/components/dashboard/client-inquiries-panel";
 import { ClientWorkPanel } from "@/components/dashboard/client-work-panel";
@@ -41,7 +42,7 @@ function DashboardContent({
   const [newInquiryCount, setNewInquiryCount] = useState(0);
 
   useEffect(() => {
-    if (!isAdmin && (section === "gallery" || section === "stories" || section === "website" || section === "messages")) {
+    if (!isAdmin && (section === "gallery" || section === "stories" || section === "website" || section === "quote" || section === "messages")) {
       router.replace("/studio/dashboard");
     }
   }, [isAdmin, router, section]);
@@ -89,7 +90,7 @@ function DashboardContent({
     };
   }, [isAdmin, section, user.email, user.uid]);
 
-  if (!isAdmin && (section === "gallery" || section === "stories" || section === "website" || section === "messages")) {
+  if (!isAdmin && (section === "gallery" || section === "stories" || section === "website" || section === "quote" || section === "messages")) {
     return null;
   }
 
@@ -115,6 +116,8 @@ function DashboardContent({
       return <AdminStoriesPanel />;
     case "website":
       return <AdminWebsitePanel />;
+    case "quote":
+      return <AdminQuotePanel />;
     case "messages":
       return <ComingSoonPanel section={section} />;
     case "work":

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { PortfolioVideo } from "@/components/portfolio/portfolio-video";
+import { QuoteModal } from "@/components/quote/quote-modal";
 import { coverageContent, coverageOptions } from "@/data/homepage";
 import { trackCoverageInquire } from "@/lib/analytics";
 import { getCoverageVideo } from "@/lib/firebase/website";
@@ -24,6 +25,7 @@ export function CoverageSection() {
   const [videoSrc, setVideoSrc] = useState("");
   const [videoPoster, setVideoPoster] = useState("");
   const [videoTitle, setVideoTitle] = useState("");
+  const [quoteOpen, setQuoteOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -141,6 +143,32 @@ export function CoverageSection() {
           Not sure which fits? Tell us your date and budget — we&apos;ll recommend
           the right coverage. Same documentary approach across every option.
         </p>
+
+        <div className="mt-5 border border-soft-black bg-ivory-dark p-5 md:mt-6 md:p-7">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="flex items-center gap-2 text-[0.8125rem] font-medium text-soft-black">
+                <span className="relative flex size-2.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-soft-black opacity-40" />
+                  <span className="relative inline-flex size-2.5 rounded-full bg-soft-black" />
+                </span>
+                Booking 2026 – 2027 · dates fill fast
+              </p>
+              <p className="mt-1.5 text-sm leading-relaxed text-soft-black-muted">
+                Answer 4 quick questions, check availability, get your custom estimate.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setQuoteOpen(true)}
+              className="tap-link flex min-h-[3.75rem] shrink-0 items-center justify-center gap-2 bg-soft-black px-10 py-4 text-[0.9375rem] font-semibold tracking-[0.14em] text-white uppercase shadow-lg transition-transform hover:scale-[1.02]"
+            >
+              Get Instant Quote →
+            </button>
+          </div>
+        </div>
+
+        {quoteOpen ? <QuoteModal onClose={() => setQuoteOpen(false)} /> : null}
       </div>
     </section>
   );

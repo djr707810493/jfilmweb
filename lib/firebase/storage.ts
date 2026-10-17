@@ -208,6 +208,33 @@ export async function uploadCoveragePoster(
   return finishCompressedUpload(path, compressed, onProgress);
 }
 
+export async function uploadQuoteVideo(
+  file: File,
+  onProgress?: (progress: number) => void,
+): Promise<string> {
+  const invalid = validateCoverageVideoFile(file);
+  if (invalid) throw new Error(invalid);
+  const storage = getFirebaseStorage();
+  const path = `website/quote/${Date.now()}-${sanitizeFileName(file.name)}`;
+  const storageRef = ref(storage, path);
+  return uploadWithProgress(storageRef, file, onProgress);
+}
+
+export async function uploadQuotePoster(
+  file: File,
+  onProgress?: (progress: number) => void,
+): Promise<{
+  url: string;
+  width: number;
+  height: number;
+  compressedSize: number;
+  skippedCompression: boolean;
+}> {
+  const compressed = await prepareCompressedImage(file, onProgress);
+  const path = `website/quote/${Date.now()}-${sanitizeFileName(compressed.file.name)}`;
+  return finishCompressedUpload(path, compressed, onProgress);
+}
+
 async function prepareCompressedImage(
   file: File,
   onProgress?: (progress: number) => void,

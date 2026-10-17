@@ -50,6 +50,14 @@ service firebase.storage {
         && request.resource.contentType.matches('image/.*|video/.*');
     }
 
+    // Quote helper video + poster — public read, admin write
+    match /website/quote/{fileName} {
+      allow read: if true;
+      allow write: if isStorageAdmin()
+        && request.resource.size < 200 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*|video/.*');
+    }
+
     function isStorageAdmin() {
       return request.auth != null
         && request.auth.token.email is string

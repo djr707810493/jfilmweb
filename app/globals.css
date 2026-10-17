@@ -112,12 +112,73 @@ body {
   font-family: var(--font-display), Georgia, "Times New Roman", serif;
 }
 
-.label-editorial {
-  font-size: 0.625rem;
-  font-weight: 500;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--color-muted);
+/* Muted by default, but layered so Tailwind color utilities can override it
+   (dark buttons otherwise stayed grey/unreadable). */
+@layer components {
+  .label-editorial {
+    font-size: 0.625rem;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+
+  @media (min-width: 768px) {
+    .label-editorial {
+      font-size: 0.6875rem;
+      letter-spacing: 0.22em;
+    }
+  }
+}
+
+/* Instant quote budget slider */
+.quote-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: rgba(146, 134, 118, 0.3);
+  outline: none;
+}
+
+.quote-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 9999px;
+  background: #1c1b19;
+  border: 3px solid #fffefb;
+  box-shadow: 0 2px 8px rgba(28, 27, 25, 0.35);
+  cursor: grab;
+}
+
+.quote-range::-webkit-slider-thumb:active {
+  cursor: grabbing;
+}
+
+.quote-range::-moz-range-thumb {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 9999px;
+  background: #1c1b19;
+  border: 3px solid #fffefb;
+  box-shadow: 0 2px 8px rgba(28, 27, 25, 0.35);
+  cursor: grab;
+}
+
+@media (min-width: 768px) {
+  .label-editorial {
+    font-size: 0.6875rem;
+    letter-spacing: 0.22em;
+  }
+}
+
+@media (min-width: 768px) {
+  .label-editorial {
+    font-size: 0.6875rem;
+    letter-spacing: 0.22em;
+  }
 }
 
 @media (min-width: 768px) {
