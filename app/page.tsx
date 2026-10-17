@@ -24,8 +24,8 @@ export default function HomePage() {
       <HeroSection />
       <IntroSection />
       <PortfolioGridSection />
-      <CoverageSection />
       <ServicesSection />
+      <CoverageSection />
       <ContactSection />
     </>
   );
