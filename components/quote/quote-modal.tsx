@@ -48,7 +48,8 @@ export function QuoteModal({ onClose, source = "unknown" }: QuoteModalProps) {
   const openedAt = useRef(Date.now());
   const bookedRef = useRef(false);
   const completedTrackedRef = useRef(false);
-  const stepTrackedRef = useRef(0);
+  // -1 so the very first step (index 0) is reported too.
+  const stepTrackedRef = useRef(-1);
 
   const outcome = useMemo(
     () => buildPackagesForBudget(budget, category, hours, addOns, rates),
