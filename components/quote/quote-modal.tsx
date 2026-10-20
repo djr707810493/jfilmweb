@@ -1,8 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CoverageVideoButton } from "@/components/quote/coverage-video-button";
 import { useQuoteRates } from "@/components/quote/use-quote-rates";
+import {
+  trackQuoteBookClick,
+  trackQuoteClose,
+  trackQuoteComplete,
+  trackQuoteOpen,
+  trackQuoteStep,
+} from "@/lib/analytics";
 import {
   QUOTE_ESTIMATE_EVENT,
   saveQuoteEstimate,
@@ -22,7 +29,13 @@ export const BUDGET_MIN = 0;
 export const BUDGET_MAX = 10000;
 const BUDGET_STEP = 100;
 
-export function QuoteModal({ onClose }: { onClose: () => void }) {
+type QuoteModalProps = {
+  onClose: () => void;
+  /** Where the tool was opened from, for funnel attribution in GA4. */
+  source?: string;
+};
+
+export function QuoteModal({ onClose, source = "unknown" }: QuoteModalProps) {
   const [step, setStep] = useState(0);
   const [date, setDate] = useState("");
   const [location, setLocation] = useState("");
@@ -32,11 +45,60 @@ export function QuoteModal({ onClose }: { onClose: () => void }) {
   const [budget, setBudget] = useState(2200);
   const [addOns, setAddOns] = useState<string[]>([]);
   const rates = useQuoteRates();
+  const openedAt = useRef(Date.now());
+  const bookedRef = useRef(false);
+  const completedTrackedRef = useRef(false);
+  const stepTrackedRef = useRef(0);
 
   const outcome = useMemo(
     () => buildPackagesForBudget(budget, category, hours, addOns, rates),
     [budget, category, hours, addOns, rates],
   );
+
+  // Open event + step funnel (every step change is reported once).
+  useEffect(() => {
+    trackQuoteOpen(source);
+    // Lets other sections know a site CTA was used (see useSectionDwell).
+    window.dispatchEvent(new CustomEvent("jfilm:quote-open-request"));
+  }, [source]);
+
+  useEffect(() => {
+    if (stepTrackedRef.current === step) return;
+    stepTrackedRef.current = step;
+    trackQuoteStep(STEPS[step] ?? "unknown", step);
+  }, [step]);
+
+  const recommendedPrice =
+    outcome.status === "ok"
+      ? (outcome.packages.find((pkg) => pkg.recommended)?.price ?? 0)
+      : 0;
+
+  // Reaching the result step counts as a generated quote — report once.
+  useEffect(() => {
+    if (step !== 4 || outcome.status !== "ok" || completedTrackedRef.current) return;
+    completedTrackedRef.current = true;
+    trackQuoteComplete({
+      categoryId: category,
+      categoryLabel:
+        rates.categories.find((c) => c.id === category)?.label ?? category,
+      hours,
+      budget,
+      packageCount: outcome.packages.length,
+      recommendedPrice,
+      durationMs: Date.now() - openedAt.current,
+    });
+  }, [step, outcome, category, hours, budget, rates.categories, recommendedPrice]);
+
+  function handleClose() {
+    trackQuoteClose({
+      lastStep: STEPS[step] ?? "unknown",
+      lastStepIndex: step,
+      completed: completedTrackedRef.current,
+      booked: bookedRef.current,
+      durationMs: Date.now() - openedAt.current,
+    });
+    onClose();
+  }
 
   function toggleAddOn(id: string) {
     setAddOns((current) =>
@@ -48,6 +110,8 @@ export function QuoteModal({ onClose }: { onClose: () => void }) {
   function bookWithEstimate() {
     const categoryLabel =
       rates.categories.find((c) => c.id === category)?.label ?? "Coverage";
+    bookedRef.current = true;
+    trackQuoteBookClick({ categoryId: category, hours, budget, recommendedPrice });
     const estimate: QuoteEstimate = {
       categoryId: category,
       categoryLabel,
@@ -71,7 +135,7 @@ export function QuoteModal({ onClose }: { onClose: () => void }) {
     };
 
     saveQuoteEstimate(estimate);
-    onClose();
+    handleClose();
     window.dispatchEvent(new CustomEvent(QUOTE_ESTIMATE_EVENT));
 
     window.setTimeout(() => {
@@ -96,7 +160,7 @@ export function QuoteModal({ onClose }: { onClose: () => void }) {
       role="dialog"
       aria-modal="true"
       aria-label="Instant quote"
-      onClick={onClose}
+      onClick={handleClose}
     >
       <div
         className="flex max-h-[94vh] w-full max-w-xl flex-col overflow-hidden bg-ivory shadow-2xl sm:rounded-sm"
@@ -111,7 +175,7 @@ export function QuoteModal({ onClose }: { onClose: () => void }) {
           </div>
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             aria-label="Close quote tool"
             className="flex size-10 items-center justify-center text-soft-black-muted hover:text-soft-black"
           >

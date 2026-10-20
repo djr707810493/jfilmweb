@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { SiteImage } from "@/components/site-image";
+import { useSectionDwell } from "@/components/home/use-section-dwell";
 import { featuredGalleryPhotos } from "@/data/featured-gallery";
 import { trackViewFullPortfolioClick } from "@/lib/analytics";
 
@@ -16,6 +17,8 @@ export function PortfolioGridSection({
   showHeader = true,
 }: PortfolioGridSectionProps) {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  // Homepage-only: measures interest in the gallery before the visitor leaves.
+  const sectionRef = useSectionDwell({ sectionId: "featured_gallery" });
 
   const frames = featuredGalleryPhotos;
   const visibleFrames = frames.slice(0, visibleCount);
@@ -26,7 +29,10 @@ export function PortfolioGridSection({
   }
 
   return (
-    <section className="section-y-compact border-b border-taupe/40">
+    <section
+      ref={sectionRef}
+      className="section-y-compact border-b border-taupe/40"
+    >
       <div className="container-editorial">
         {showHeader && (
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between md:gap-6">

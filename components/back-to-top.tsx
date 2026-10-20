@@ -79,7 +79,9 @@ export function BackToTop() {
         </button>
       </div>
 
-      {quoteOpen ? <QuoteModal onClose={() => setQuoteOpen(false)} /> : null}
+      {quoteOpen ? (
+        <QuoteModal source="floating_button" onClose={() => setQuoteOpen(false)} />
+      ) : null}
     </>
   );
 }

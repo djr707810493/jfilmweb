@@ -168,7 +168,9 @@ export function CoverageSection() {
           </div>
         </div>
 
-        {quoteOpen ? <QuoteModal onClose={() => setQuoteOpen(false)} /> : null}
+        {quoteOpen ? (
+          <QuoteModal source="coverage_section" onClose={() => setQuoteOpen(false)} />
+        ) : null}
       </div>
     </section>
   );
