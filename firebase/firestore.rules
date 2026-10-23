@@ -130,7 +130,7 @@ service cloud.firestore {
         && data.name.size() <= 120
         && data.email is string
         && data.email.matches('^[A-Za-z0-9._%+\\-]+@[A-Za-z0-9.\\-]+\\.[A-Za-z]{2,}$')
-        && data.serviceType in ['photography', 'videography', 'both', 'wedding', 'elopement', 'film-digital', 'other']
+        && data.serviceType in ['photography', 'videography', 'both', 'ai-film', 'wedding', 'elopement', 'film-digital', 'other']
         && data.message is string
         && data.message.size() > 0
         && data.message.size() <= 5000

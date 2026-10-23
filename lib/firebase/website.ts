@@ -6,8 +6,10 @@ import {
   setDoc,
 } from "firebase/firestore";
 import { getFirestoreDb } from "@/lib/firebase";
+import { aiFilmShowcase } from "@/data/ai-film";
 import { heroContent, introContent } from "@/data/homepage";
 import type {
+  AiFilmVideo,
   CoverageVideo,
   HeroButton,
   HeroCopy,
@@ -21,6 +23,7 @@ const HERO_DOC = "hero";
 const INTRO_DOC = "intro";
 const COVERAGE_DOC = "coverage";
 const QUOTE_VIDEO_DOC = "quote-video";
+const AI_FILM_DOC = "ai-film";
 export const HERO_INTERVAL_MS = 5000;
 export const HERO_MAX_BUTTONS = 3;
 
@@ -338,6 +341,76 @@ export async function saveQuoteVideo(video: CoverageVideo): Promise<void> {
       src: video.src.trim(),
       poster: video.poster.trim(),
       title: video.title.trim(),
+      updatedAt: serverTimestamp(),
+    },
+    { merge: true },
+  );
+}
+
+export function createDefaultAiFilmFilms(): AiFilmVideo[] {
+  return aiFilmShowcase.films.map((film) => ({
+    id: film.id,
+    title: film.title,
+    subtitle: film.subtitle,
+    tag: film.tag,
+    duration: film.duration,
+    poster: film.poster,
+    alt: film.alt,
+    src: "",
+  }));
+}
+
+export async function getAiFilmFilms(): Promise<AiFilmVideo[]> {
+  const defaults = createDefaultAiFilmFilms();
+  const db = getFirestoreDb();
+  const snapshot = await getDoc(doc(db, COLLECTION, AI_FILM_DOC));
+
+  if (!snapshot.exists()) return defaults;
+
+  const data = snapshot.data() as Record<string, unknown>;
+  const raw = Array.isArray(data.films) ? data.films : [];
+  const saved = new Map<string, Record<string, unknown>>();
+
+  for (const entry of raw) {
+    if (!entry || typeof entry !== "object") continue;
+    const film = entry as Record<string, unknown>;
+    const id = String(film.id ?? "").trim();
+    if (id) saved.set(id, film);
+  }
+
+  return defaults.map((film) => {
+    const stored = saved.get(film.id);
+    if (!stored) return film;
+
+    return {
+      id: film.id,
+      title: String(stored.title ?? "").trim().slice(0, 120) || film.title,
+      subtitle: String(stored.subtitle ?? "").trim().slice(0, 120) || film.subtitle,
+      tag: String(stored.tag ?? "").trim().slice(0, 40) || film.tag,
+      duration: String(stored.duration ?? "").trim().slice(0, 16) || film.duration,
+      poster: String(stored.poster ?? "").trim() || film.poster,
+      alt: String(stored.alt ?? "").trim() || film.alt,
+      src: String(stored.src ?? "").trim(),
+    };
+  });
+}
+
+export async function saveAiFilmFilms(films: AiFilmVideo[]): Promise<void> {
+  const db = getFirestoreDb();
+
+  await setDoc(
+    doc(db, COLLECTION, AI_FILM_DOC),
+    {
+      films: films.map((film) => ({
+        id: film.id.trim(),
+        title: film.title.trim().slice(0, 120),
+        subtitle: film.subtitle.trim().slice(0, 120),
+        tag: film.tag.trim().slice(0, 40),
+        duration: film.duration.trim().slice(0, 16),
+        poster: film.poster.trim(),
+        alt: film.alt.trim().slice(0, 200),
+        src: film.src.trim(),
+      })),
       updatedAt: serverTimestamp(),
     },
     { merge: true },

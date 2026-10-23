@@ -4,9 +4,9 @@
  * Replace these files with your own photography when ready.
  */
 export const placeholderImages = {
-  heroMountainWedding: "/images/placeholders/hero-mountain-wedding.jpg",
+  heroMountainWedding: "/images/placeholders/bride-groom-mountain.jpg",
   brideGroomMountain: "/images/placeholders/bride-groom-mountain.jpg",
-  coupleMountainEmbrace: "/images/placeholders/hero-mountain-wedding.jpg",
+  coupleMountainEmbrace: "/images/placeholders/bride-groom-mountain.jpg",
   desertCanyon: "/images/placeholders/desert-canyon.jpg",
   weddingRings: "/images/placeholders/wedding-rings.jpg",
   weddingCouple: "/images/placeholders/wedding-couple.jpg",
@@ -24,4 +24,10 @@ export const placeholderImages = {
   cinemaRig: "/images/placeholders/images.jpeg",
   editingStudio: "/images/placeholders/pexels-photo-34002328.avif",
   founderJeffery: "/images/placeholders/jeffery-d-founder.png",
+} as const;
+
+/** Production (non-placeholder) imagery for the AI Film service. */
+export const aiFilmImages = {
+  heroBanner: "/images/ai-film/hero-banner.webp",
+  whatIsAiFilm: "/images/ai-film/what-is-ai-film.webp",
 } as const;

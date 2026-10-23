@@ -71,6 +71,17 @@ export function ContactForm({ embedded = false }: { embedded?: boolean }) {
 
   const firebaseReady = isFirebaseConfigured();
 
+  // Prefill the service type when a link (e.g. the AI Film page) asks for it.
+  useEffect(() => {
+    const requested = new URLSearchParams(window.location.search).get("service");
+    if (!requested) return;
+
+    const match = SERVICE_TYPE_OPTIONS.find((option) => option.value === requested);
+    if (!match) return;
+
+    setForm((prev) => ({ ...prev, serviceType: match.value }));
+  }, []);
+
   // Prefill from the instant quote tool (session storage + live event).
   useEffect(() => {
     function applyEstimate() {

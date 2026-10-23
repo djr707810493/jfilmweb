@@ -21,6 +21,7 @@ export const siteConfig = {
   nav: [
     { label: "Weddings", href: "/weddings" },
     { label: "Portfolio", href: "/portfolio" },
+    { label: "AI Film", href: "/ai-film" },
     { label: "About", href: "/about" },
     { label: "Contact", href: "/#contact" },
   ],

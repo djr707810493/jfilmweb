@@ -42,3 +42,18 @@ export type CoverageVideo = {
   poster: string;
   title: string;
 };
+
+export type AiFilmVideo = {
+  id: string;
+  title: string;
+  subtitle: string;
+  tag: string;
+  duration: string;
+  poster: string;
+  alt: string;
+  src: string;
+};
+
+export type AiFilmShowcaseSettings = {
+  films: AiFilmVideo[];
+};

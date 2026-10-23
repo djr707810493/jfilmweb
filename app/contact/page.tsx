@@ -1,6 +1,8 @@
+import { Suspense } from "react";
 import { ContactForm } from "@/components/contact-form";
 import { siteConfig } from "@/data/site";
 import { createPageMetadata } from "@/lib/seo";
+import { ContactIntroCopy, defaultContactIntro } from "./contact-intro-copy";
 
 export const metadata = createPageMetadata({
   title: "Contact | Utah Destination Wedding Photographer",
@@ -13,14 +15,21 @@ export default function ContactPage() {
   return (
     <div className="container-editorial section-y">
       <div className="max-w-2xl">
-        <p className="label-editorial">Inquire</p>
-        <h1 className="font-display mt-4 text-4xl text-soft-black lg:text-5xl">
-          Contact Your Utah Wedding Photographer
-        </h1>
-        <p className="mt-6 text-soft-black-muted">
-          Share your date, location, and vision. We accept a limited number of
-          weddings each year.
-        </p>
+        <Suspense
+          fallback={
+            <>
+              <p className="label-editorial">{defaultContactIntro.label}</p>
+              <h1 className="font-display mt-4 text-4xl text-soft-black lg:text-5xl">
+                {defaultContactIntro.heading}
+              </h1>
+              <p className="mt-6 text-soft-black-muted">
+                {defaultContactIntro.body}
+              </p>
+            </>
+          }
+        >
+          <ContactIntroCopy />
+        </Suspense>
         <dl className="mt-6 flex flex-wrap gap-x-8 gap-y-2 text-sm text-soft-black-muted">
           <div>
             <dt className="label-editorial mb-1">Email</dt>

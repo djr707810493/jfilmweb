@@ -1,6 +1,6 @@
 import type { InquiryQuote } from "@/types/inquiry-quote";
 
-export type ServiceType = "photography" | "videography" | "both";
+export type ServiceType = "photography" | "videography" | "both" | "ai-film";
 
 export type SubmissionStatus =
   | "new"
@@ -48,6 +48,7 @@ export const SERVICE_TYPE_OPTIONS: { value: ServiceType; label: string }[] = [
   { value: "photography", label: "Photography" },
   { value: "videography", label: "Videography" },
   { value: "both", label: "Both" },
+  { value: "ai-film", label: "AI Film" },
 ];
 
 const LEGACY_SERVICE_TYPE_LABELS: Record<string, string> = {
@@ -127,7 +128,12 @@ export function serviceTypeLabel(value: ServiceType | string): string {
 }
 
 export function normalizeServiceType(value: unknown): ServiceType {
-  if (value === "photography" || value === "videography" || value === "both") {
+  if (
+    value === "photography" ||
+    value === "videography" ||
+    value === "both" ||
+    value === "ai-film"
+  ) {
     return value;
   }
   return "photography";

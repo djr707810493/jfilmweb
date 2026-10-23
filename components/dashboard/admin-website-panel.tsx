@@ -7,30 +7,50 @@ import {
   dashboardSelectClass,
 } from "@/components/dashboard/dashboard-layout";
 import { MediaLibraryPicker } from "@/components/dashboard/media-library-picker";
+import { WebsiteAiFilmSection } from "@/components/dashboard/website-ai-film-section";
 import { WebsiteVideoSection } from "@/components/dashboard/website-video-section";
 import {
   formatCompressionSummary,
   imageCompressionHint,
 } from "@/lib/image-compress";
-import { uploadCoveragePoster, uploadCoverageVideo, uploadHeroImage, uploadIntroImage, uploadQuotePoster, uploadQuoteVideo } from "@/lib/firebase/storage";
 import {
+  uploadAiFilmPoster,
+  uploadAiFilmVideo,
+  uploadCoveragePoster,
+  uploadCoverageVideo,
+  uploadHeroImage,
+  uploadIntroImage,
+  uploadQuotePoster,
+  uploadQuoteVideo,
+} from "@/lib/firebase/storage";
+import {
+  createDefaultAiFilmFilms,
   createDefaultCoverageVideo,
   createDefaultHeroSlide,
   createDefaultIntroImage,
   createHeroButton,
   createHeroSlide,
+  getAiFilmFilms,
   getCoverageVideo,
   getHeroSettings,
   getIntroImage,
   getQuoteVideo,
   HERO_MAX_BUTTONS,
+  saveAiFilmFilms,
   saveCoverageVideo,
   saveHeroSettings,
   saveIntroImage,
   saveQuoteVideo,
 } from "@/lib/firebase/website";
 import { isDirectVideoFileUrl, isValidVideoEmbedUrl } from "@/lib/video-embed";
-import type { CoverageVideo, HeroButton, HeroCopy, HeroSlide, IntroImage } from "@/types/website";
+import type {
+  AiFilmVideo,
+  CoverageVideo,
+  HeroButton,
+  HeroCopy,
+  HeroSlide,
+  IntroImage,
+} from "@/types/website";
 
 export function AdminWebsitePanel() {
   const [slides, setSlides] = useState<HeroSlide[]>([]);
@@ -42,6 +62,9 @@ export function AdminWebsitePanel() {
   const [quoteVideo, setQuoteVideo] = useState<CoverageVideo>(createDefaultCoverageVideo());
   const [quoteSaving, setQuoteSaving] = useState(false);
   const [quoteUploading, setQuoteUploading] = useState(false);
+  const [aiFilms, setAiFilms] = useState<AiFilmVideo[]>(createDefaultAiFilmFilms);
+  const [aiFilmSaving, setAiFilmSaving] = useState(false);
+  const [aiFilmUploadingId, setAiFilmUploadingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -54,11 +77,12 @@ export function AdminWebsitePanel() {
     setLoading(true);
     setError("");
     try {
-      const [hero, intro, coverage, quote] = await Promise.all([
+      const [hero, intro, coverage, quote, films] = await Promise.all([
         getHeroSettings(),
         getIntroImage(),
         getCoverageVideo(),
         getQuoteVideo(),
+        getAiFilmFilms(),
       ]);
       const nextSlides =
         hero.slides.length > 0 ? hero.slides : [createDefaultHeroSlide()];
@@ -66,12 +90,14 @@ export function AdminWebsitePanel() {
       setIntroImage(intro);
       setCoverageVideo(coverage);
       setQuoteVideo(quote);
+      setAiFilms(films);
     } catch {
       setError("Could not load website settings. Check admin access and Firestore rules.");
       setSlides([createDefaultHeroSlide()]);
       setIntroImage(createDefaultIntroImage());
       setCoverageVideo(createDefaultCoverageVideo());
       setQuoteVideo(createDefaultCoverageVideo());
+      setAiFilms(createDefaultAiFilmFilms());
     } finally {
       setLoading(false);
     }
@@ -472,14 +498,92 @@ export function AdminWebsitePanel() {
     }
   }
 
-  const busy = saving || uploading || introUploading || coverageSaving || coverageUploading || quoteSaving || quoteUploading;
+  function updateAiFilm(id: string, patch: Partial<AiFilmVideo>) {
+    setAiFilms((current) =>
+      current.map((film) => (film.id === id ? { ...film, ...patch } : film)),
+    );
+  }
+
+  async function handleSaveAiFilms() {
+    const invalid = aiFilms.find((film) => {
+      const src = film.src.trim();
+      return src.length > 0 && !isValidVideoEmbedUrl(src) && !isDirectVideoFileUrl(src);
+    });
+    if (invalid) {
+      setError(
+        `"${invalid.title}" needs a YouTube/Vimeo link or an uploaded mp4/webm file.`,
+      );
+      return;
+    }
+
+    setAiFilmSaving(true);
+    setError("");
+    try {
+      await saveAiFilmFilms(aiFilms);
+      setStatus("AI Film showcase saved. The /ai-film page now uses these videos.");
+    } catch {
+      setError("Could not save the AI Film showcase.");
+    } finally {
+      setAiFilmSaving(false);
+    }
+  }
+
+  async function handleUploadAiFilmVideo(id: string, file: File) {
+    setError("");
+    setAiFilmUploadingId(id);
+    setStatus(`Uploading ${file.name}…`);
+    try {
+      const url = await uploadAiFilmVideo(file, (progress) => {
+        setStatus(`Uploading ${file.name}… ${progress}%`);
+      });
+      const next = aiFilms.map((film) =>
+        film.id === id ? { ...film, src: url } : film,
+      );
+      setAiFilms(next);
+      await saveAiFilmFilms(next);
+      setStatus("AI Film video uploaded and saved.");
+    } catch (uploadError) {
+      setError(uploadError instanceof Error ? uploadError.message : "Video upload failed.");
+    } finally {
+      setAiFilmUploadingId(null);
+    }
+  }
+
+  async function handleUploadAiFilmPoster(id: string, file: File) {
+    setError("");
+    setAiFilmUploadingId(id);
+    try {
+      const result = await uploadAiFilmPoster(file);
+      const next = aiFilms.map((film) =>
+        film.id === id ? { ...film, poster: result.url } : film,
+      );
+      setAiFilms(next);
+      await saveAiFilmFilms(next);
+      setStatus(
+        `AI Film poster saved · ${formatCompressionSummary({
+          file,
+          originalSize: file.size,
+          compressedSize: result.compressedSize,
+          width: result.width,
+          height: result.height,
+          skippedCompression: result.skippedCompression,
+        })}`,
+      );
+    } catch (uploadError) {
+      setError(uploadError instanceof Error ? uploadError.message : "Poster upload failed.");
+    } finally {
+      setAiFilmUploadingId(null);
+    }
+  }
+
+  const busy = saving || uploading || introUploading || coverageSaving || coverageUploading || quoteSaving || quoteUploading || aiFilmSaving || aiFilmUploadingId !== null;
 
   return (
     <div>
       <DashboardPageHeader
         eyebrow="Website"
         title="Homepage"
-        description="Manage the hero carousel and The Studio portrait. Images are compressed automatically."
+        description="Manage the hero carousel, The Studio portrait, and the AI Film showcase. Images are compressed automatically."
       />
 
       {loading ? (
@@ -885,6 +989,21 @@ export function AdminWebsitePanel() {
             onRemove={() => handleRemoveQuote()}
             onUploadVideo={(file) => handleUploadQuoteVideo(file).catch(() => undefined)}
             onUploadPoster={(file) => handleUploadQuotePoster(file).catch(() => undefined)}
+          />
+
+          <WebsiteAiFilmSection
+            films={aiFilms}
+            saving={aiFilmSaving}
+            uploadingId={aiFilmUploadingId}
+            busy={busy}
+            onChange={updateAiFilm}
+            onSave={() => handleSaveAiFilms()}
+            onUploadVideo={(id, file) =>
+              handleUploadAiFilmVideo(id, file).catch(() => undefined)
+            }
+            onUploadPoster={(id, file) =>
+              handleUploadAiFilmPoster(id, file).catch(() => undefined)
+            }
           />
 
           {status && (

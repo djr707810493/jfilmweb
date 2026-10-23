@@ -235,6 +235,33 @@ export async function uploadQuotePoster(
   return finishCompressedUpload(path, compressed, onProgress);
 }
 
+export async function uploadAiFilmVideo(
+  file: File,
+  onProgress?: (progress: number) => void,
+): Promise<string> {
+  const invalid = validateCoverageVideoFile(file);
+  if (invalid) throw new Error(invalid);
+  const storage = getFirebaseStorage();
+  const path = `website/ai-film/${Date.now()}-${sanitizeFileName(file.name)}`;
+  const storageRef = ref(storage, path);
+  return uploadWithProgress(storageRef, file, onProgress);
+}
+
+export async function uploadAiFilmPoster(
+  file: File,
+  onProgress?: (progress: number) => void,
+): Promise<{
+  url: string;
+  width: number;
+  height: number;
+  compressedSize: number;
+  skippedCompression: boolean;
+}> {
+  const compressed = await prepareCompressedImage(file, onProgress);
+  const path = `website/ai-film/${Date.now()}-${sanitizeFileName(compressed.file.name)}`;
+  return finishCompressedUpload(path, compressed, onProgress);
+}
+
 async function prepareCompressedImage(
   file: File,
   onProgress?: (progress: number) => void,
