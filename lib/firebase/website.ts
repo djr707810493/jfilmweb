@@ -7,7 +7,7 @@ import {
 } from "firebase/firestore";
 import { getFirestoreDb } from "@/lib/firebase";
 import { aiFilmShowcase } from "@/data/ai-film";
-import { heroContent, introContent } from "@/data/homepage";
+import { heroContent, introContent, aiFilmHeroSlide } from "@/data/homepage";
 import type {
   AiFilmVideo,
   CoverageVideo,
@@ -56,6 +56,47 @@ export function createDefaultHeroSlide(): HeroSlide {
     alt: heroContent.image.alt,
     copy: createDefaultHeroCopy(),
   };
+}
+
+/**
+ * The hero ships with two slides so the AI Film service is visible even before
+ * an admin saves anything from the website panel.
+ */
+export function createDefaultHeroSlides(): HeroSlide[] {
+  return [
+    createDefaultHeroSlide(),
+    {
+      id: "default-ai-film",
+      src: aiFilmHeroSlide.src,
+      alt: aiFilmHeroSlide.alt,
+      copy: {
+        label: aiFilmHeroSlide.label,
+        headline: aiFilmHeroSlide.headline,
+        body: aiFilmHeroSlide.body,
+        buttons: aiFilmHeroSlide.buttons.map((button) => ({ ...button })),
+      },
+    },
+  ];
+}
+
+/**
+ * Slides saved in Firestore win over the built-in ones, but the AI Film slide is
+ * kept as the second slide until someone saves a hero that already promotes it.
+ */
+export function withDefaultAiFilmSlide(slides: HeroSlide[]): HeroSlide[] {
+  if (slides.length === 0) return createDefaultHeroSlides();
+
+  const alreadyPromoted = slides.some(
+    (slide) =>
+      slide.src === aiFilmHeroSlide.src ||
+      slide.copy.buttons.some((button) => button.href.includes("/ai-film")),
+  );
+  if (alreadyPromoted) return slides;
+
+  const aiSlide = createDefaultHeroSlides()[1];
+  const next = [...slides];
+  next.splice(Math.min(1, next.length), 0, aiSlide);
+  return next;
 }
 
 export function createHeroButton(): HeroButton {
@@ -416,3 +457,4 @@ export async function saveAiFilmFilms(films: AiFilmVideo[]): Promise<void> {
     { merge: true },
   );
 }
+

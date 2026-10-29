@@ -4,9 +4,10 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { heroContent } from "@/data/homepage";
 import {
-  createDefaultHeroSlide,
+  createDefaultHeroSlides,
   getHeroSettings,
   HERO_INTERVAL_MS,
+  withDefaultAiFilmSlide,
 } from "@/lib/firebase/website";
 import { isFirebaseConfigured } from "@/lib/firebase";
 import type { HeroButton, HeroSlide } from "@/types/website";
@@ -63,7 +64,7 @@ function HeroSlideImage({
 }
 
 export function HeroSection() {
-  const [slides, setSlides] = useState<HeroSlide[]>([createDefaultHeroSlide()]);
+  const [slides, setSlides] = useState<HeroSlide[]>(createDefaultHeroSlides);
   const [activeIndex, setActiveIndex] = useState(0);
   const [paused, setPaused] = useState(false);
 
@@ -75,10 +76,8 @@ export function HeroSection() {
     getHeroSettings()
       .then((settings) => {
         if (cancelled) return;
-        if (settings.slides.length > 0) {
-          setSlides(settings.slides);
-          setActiveIndex(0);
-        }
+        setSlides(withDefaultAiFilmSlide(settings.slides));
+        setActiveIndex(0);
       })
       .catch(() => {
         // Keep the built-in hero if remote settings fail to load

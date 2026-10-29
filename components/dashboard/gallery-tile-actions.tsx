@@ -6,6 +6,8 @@ type GalleryTileActionsProps = {
   canMoveEarlier: boolean;
   canMoveLater: boolean;
   curated?: boolean;
+  /** `"homepage"` labels the star as the homepage Films picker. */
+  curatedLabel?: string;
   showCurated?: boolean;
   onMoveEarlier: () => void;
   onMoveLater: () => void;
@@ -20,6 +22,7 @@ export function GalleryTileActions({
   canMoveEarlier,
   canMoveLater,
   curated = false,
+  curatedLabel,
   showCurated = false,
   onMoveEarlier,
   onMoveLater,
@@ -44,7 +47,15 @@ export function GalleryTileActions({
           </ActionButton>
           {showCurated && onToggleCurated ? (
             <ActionButton
-              label={curated ? "Remove from featured" : "Add to featured"}
+              label={
+                curatedLabel === "homepage"
+                  ? curated
+                    ? "Remove from homepage"
+                    : "Show on homepage"
+                  : curated
+                    ? "Remove from featured"
+                    : "Add to featured"
+              }
               onClick={onToggleCurated}
               tone={curated ? "active" : "default"}
             >

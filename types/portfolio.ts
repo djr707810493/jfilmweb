@@ -21,6 +21,8 @@ export interface PortfolioVideoMedia extends PortfolioMediaBase {
   src: string;
   poster: string;
   duration?: string;
+  /** Shown in the homepage Featured Gallery "Films" tab. */
+  featured?: boolean;
 }
 
 export type PortfolioMedia = PortfolioImageMedia | PortfolioVideoMedia;

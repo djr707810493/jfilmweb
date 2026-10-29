@@ -14,6 +14,18 @@ export const heroContent = {
   },
 } as const;
 
+export const aiFilmHeroSlide = {
+  src: "/images/ai-film/hero-banner.webp",
+  alt: "Couple at golden hour with a temple on the horizon and a film strip of wedding memories",
+  label: "AI Film · New Service",
+  headline: "Your Photos. A Movie to Relive.",
+  body: "Even if the best moments went unphotographed, we can bring them back — your real photographs, turned into a cinematic film.",
+  buttons: [
+    { id: "ai-film-explore", label: "Explore AI Film", href: "/ai-film", style: "primary" as const },
+    { id: "ai-film-process", label: "See How It Works", href: "/ai-film#process", style: "secondary" as const },
+  ],
+} as const;
+
 export const introContent = {
   label: "The Studio",
   heading: "Photography that honors the day as it was — not as a template.",
@@ -88,8 +100,8 @@ export const portfolioGrid = [
 
 export const coverageContent = {
   label: "Coverage",
-  heading: "Photo, film, or both — a solution for every budget.",
-  body: "The storytelling stays the same. What changes is the crew: one medium, one artist doing both, or a dedicated photographer and videographer. You don't have to stretch — we have a fit.",
+  heading: "Photo, film, both — or a film from the photos you already have.",
+  body: "The storytelling stays the same. What changes is who is there: one artist, an artist doing both, a full two-person crew, or no shoot at all. You don't have to stretch — we have a fit.",
 } as const;
 
 export const coverageOptions = [
@@ -140,6 +152,25 @@ export const coverageOptions = [
       "Photo and film at the same time",
       "Nothing missed when both happen at once",
     ],
+  },
+  {
+    id: "ai-film",
+    number: "04",
+    budgetLabel: "From $149",
+    title: "AI Film",
+    crew: "No shoot required",
+    operators: 0,
+    featured: false,
+    badge: "New service",
+    description:
+      "Already have the photos? We turn your gallery into a short cinematic film — and rebuild the moments nobody managed to photograph.",
+    includes: [
+      "Works from an existing gallery or phone photos",
+      "Motion, depth & a licensed soundtrack",
+      "Delivered in 7–14 days",
+    ],
+    href: "/ai-film",
+    cta: "Explore AI Film",
   },
 ] as const;
 

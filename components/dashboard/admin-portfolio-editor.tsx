@@ -286,6 +286,14 @@ export function AdminPortfolioEditor({
     }
   }
 
+  /** Star on a video card = "show this film on the homepage Films tab". */
+  function toggleHomepageMedia(index: number) {
+    const item = value.media[index];
+    if (!item || item.type !== "video") return;
+
+    updateMediaItem(index, { ...item, featured: !item.featured });
+  }
+
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
     onSave();
@@ -556,7 +564,12 @@ export function AdminPortfolioEditor({
                 }
                 onMoveEarlier={() => moveMediaItem(index, index - 1)}
                 onMoveLater={() => moveMediaItem(index, index + 1)}
-                onToggleCurated={undefined}
+                onToggleCurated={
+                  item.type === "video"
+                    ? () => toggleHomepageMedia(index)
+                    : undefined
+                }
+                curatedLabel="homepage"
                 onRemove={() => removeMediaItem(index)}
               />
             ))}
@@ -696,6 +709,7 @@ function GalleryMediaTile({
   onMoveEarlier,
   onMoveLater,
   onToggleCurated,
+  curatedLabel,
   onRemove,
 }: {
   item: PortfolioMedia;
@@ -706,6 +720,7 @@ function GalleryMediaTile({
   onMoveEarlier: () => void;
   onMoveLater: () => void;
   onToggleCurated?: () => void;
+  curatedLabel?: string;
   onRemove: () => void;
 }) {
   const previewSrc =
@@ -762,7 +777,10 @@ function GalleryMediaTile({
         previewAlt={item.alt}
         canMoveEarlier={index > 0}
         canMoveLater={index < total - 1}
-        curated={item.type === "image" && item.curated === true}
+        curated={
+          item.type === "image" ? item.curated === true : item.featured === true
+        }
+        curatedLabel={curatedLabel}
         showCurated={Boolean(onToggleCurated)}
         onMoveEarlier={onMoveEarlier}
         onMoveLater={onMoveLater}

@@ -77,8 +77,13 @@ export function CoverageSection() {
           </div>
         ) : null}
 
-        <div className="mt-8 grid gap-3 sm:mt-10 sm:grid-cols-3 sm:gap-4 md:mt-14 md:gap-6">
-          {coverageOptions.map((option) => (
+        <div className="mt-8 grid gap-3 sm:mt-10 sm:grid-cols-2 sm:gap-4 md:mt-14 md:gap-6 lg:grid-cols-4">
+          {coverageOptions.map((option) => {
+            const badge = "badge" in option ? option.badge : null;
+            const href = "href" in option ? option.href : "#contact";
+            const cta = "cta" in option ? option.cta : "Ask about this coverage";
+
+            return (
             <article
               key={option.id}
               className={`flex flex-col border p-5 md:p-7 ${
@@ -99,6 +104,8 @@ export function CoverageSection() {
               <div className="mt-4 min-h-[1rem]">
                 {option.featured ? (
                   <p className="label-editorial text-soft-black">Most requested</p>
+                ) : badge ? (
+                  <p className="label-editorial text-soft-black">{badge}</p>
                 ) : null}
               </div>
 
@@ -127,16 +134,17 @@ export function CoverageSection() {
               </ul>
 
               <Link
-                href="#contact"
+                href={href}
                 onClick={() =>
                   trackCoverageInquire(option.id, `${option.title} · ${option.crew}`)
                 }
                 className="label-editorial link-underline tap-link mt-auto pt-6 text-soft-black md:pt-8"
               >
-                Ask about this coverage
+                {cta}
               </Link>
             </article>
-          ))}
+            );
+          })}
         </div>
 
         <p className="mt-8 max-w-xl text-[0.8125rem] leading-relaxed text-soft-black-muted md:mt-10 md:text-sm">

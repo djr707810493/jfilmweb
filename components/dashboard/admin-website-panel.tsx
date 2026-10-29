@@ -26,7 +26,8 @@ import {
 import {
   createDefaultAiFilmFilms,
   createDefaultCoverageVideo,
-  createDefaultHeroSlide,
+  createDefaultHeroSlides,
+  withDefaultAiFilmSlide,
   createDefaultIntroImage,
   createHeroButton,
   createHeroSlide,
@@ -84,8 +85,7 @@ export function AdminWebsitePanel() {
         getQuoteVideo(),
         getAiFilmFilms(),
       ]);
-      const nextSlides =
-        hero.slides.length > 0 ? hero.slides : [createDefaultHeroSlide()];
+      const nextSlides = withDefaultAiFilmSlide(hero.slides);
       setSlides(nextSlides);
       setIntroImage(intro);
       setCoverageVideo(coverage);
@@ -93,7 +93,7 @@ export function AdminWebsitePanel() {
       setAiFilms(films);
     } catch {
       setError("Could not load website settings. Check admin access and Firestore rules.");
-      setSlides([createDefaultHeroSlide()]);
+      setSlides(createDefaultHeroSlides());
       setIntroImage(createDefaultIntroImage());
       setCoverageVideo(createDefaultCoverageVideo());
       setQuoteVideo(createDefaultCoverageVideo());
@@ -576,7 +576,16 @@ export function AdminWebsitePanel() {
     }
   }
 
-  const busy = saving || uploading || introUploading || coverageSaving || coverageUploading || quoteSaving || quoteUploading || aiFilmSaving || aiFilmUploadingId !== null;
+  const busy =
+    saving ||
+    uploading ||
+    introUploading ||
+    coverageSaving ||
+    coverageUploading ||
+    quoteSaving ||
+    quoteUploading ||
+    aiFilmSaving ||
+    aiFilmUploadingId !== null;
 
   return (
     <div>

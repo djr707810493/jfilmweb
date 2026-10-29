@@ -48,6 +48,7 @@ function serializeMedia(media: PortfolioMedia) {
     alt: media.alt,
     title: media.title ?? null,
     duration: media.duration ?? null,
+    featured: media.featured === true,
   };
 }
 
@@ -73,6 +74,7 @@ function deserializeMedia(data: Record<string, unknown>): PortfolioMedia | null 
       alt: String(data.alt ?? ""),
       title: data.title ? String(data.title) : undefined,
       duration: data.duration ? String(data.duration) : undefined,
+      featured: data.featured === true,
     };
   }
 
