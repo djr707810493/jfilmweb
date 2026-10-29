@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
+import { Suspense } from "react";
 import { FirebaseAnalytics } from "@/components/firebase-analytics";
 import { LayoutShell } from "@/components/layout-shell";
 import { AuthProvider } from "@/contexts/auth-provider";
@@ -85,7 +86,9 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <AuthProvider>
-          <FirebaseAnalytics />
+          <Suspense fallback={null}>
+            <FirebaseAnalytics />
+          </Suspense>
           <LayoutShell>{children}</LayoutShell>
         </AuthProvider>
       </body>

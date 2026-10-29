@@ -4,11 +4,23 @@ import type { PortfolioProject } from "@/types/portfolio";
 
 export type PortfolioListName = "home_featured" | "portfolio_gallery";
 
+/**
+ * The studio dashboard is used by staff, not prospects. Anything measured there
+ * pollutes acquisition and engagement reports, so never send those hits.
+ */
+export function isStaffPath(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    window.location.pathname.startsWith("/studio")
+  );
+}
+
 function trackEvent(
   eventName: string,
   params?: Record<string, string | number | boolean | undefined>,
 ): void {
   if (typeof window === "undefined" || !isFirebaseConfigured()) return;
+  if (isStaffPath()) return;
 
   getFirebaseAnalytics()
     .then((analytics) => {
@@ -55,10 +67,62 @@ export function trackCoverageInquire(optionId: string, optionTitle: string): voi
   });
 }
 
+/* ---------------- Lead & contact events ---------------- */
+
+/**
+ * A prospect actually submitted an inquiry. This is the event to mark as a key
+ * event in GA4 — everything else measures intent, not outcome.
+ */
+export function trackInquirySubmit(params: {
+  serviceType: string;
+  surface: "contact_page" | "inline_section";
+  hasDate: boolean;
+  usedQuote: boolean;
+  attachmentCount: number;
+}): void {
+  trackEvent("generate_lead", {
+    service_type: params.serviceType,
+    form_surface: params.surface,
+    has_date: params.hasDate,
+    used_quote_calculator: params.usedQuote,
+    attachment_count: params.attachmentCount,
+  });
+}
+
+/**
+ * Clicked a "send an inquiry" style link, before anything was submitted.
+ * Keeping this separate from `generate_lead` shows where leads are lost.
+ */
+export function trackInquiryCtaClick(params: {
+  surface: string;
+  href: string;
+}): void {
+  trackEvent("inquiry_cta_click", {
+    cta_surface: params.surface,
+    cta_target: params.href,
+  });
+}
+
+/** Phone, email or social links used instead of the form. */
+export function trackContactClick(params: {
+  method: "phone" | "email" | "social";
+  surface: string;
+  target: string;
+}): void {
+  trackEvent("contact_click", {
+    contact_method: params.method,
+    cta_surface: params.surface,
+    contact_target: params.target,
+  });
+}
+
 /* ---------------- Instant quote funnel ---------------- */
 
 export function trackQuoteOpen(source: string): void {
-  trackEvent("quote_open", { source });
+  // NOTE: `source` is a GA4 reserved parameter — sending it makes GA treat the
+  // value as a traffic source ("floating_button / (not set)"). Never rename
+  // this back.
+  trackEvent("quote_open", { quote_source: source });
 }
 
 export function trackQuoteStep(stepName: string, stepIndex: number): void {

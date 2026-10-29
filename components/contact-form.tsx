@@ -16,6 +16,7 @@ import {
   type QuoteEstimate,
 } from "@/components/quote/quote-session";
 import { formatUSD } from "@/components/quote/quote-config";
+import { trackInquirySubmit } from "@/lib/analytics";
 import { siteConfig } from "@/data/site";
 import {
   MAX_ATTACHMENT_COUNT,
@@ -73,13 +74,19 @@ export function ContactForm({ embedded = false }: { embedded?: boolean }) {
 
   // Prefill the service type when a link (e.g. the AI Film page) asks for it.
   useEffect(() => {
-    const requested = new URLSearchParams(window.location.search).get("service");
-    if (!requested) return;
+    function applyServiceParam() {
+      const requested = new URLSearchParams(window.location.search).get("service");
+      if (!requested) return;
 
-    const match = SERVICE_TYPE_OPTIONS.find((option) => option.value === requested);
-    if (!match) return;
+      const match = SERVICE_TYPE_OPTIONS.find(
+        (option) => option.value === requested,
+      );
+      if (!match) return;
 
-    setForm((prev) => ({ ...prev, serviceType: match.value }));
+      setForm((prev) => ({ ...prev, serviceType: match.value }));
+    }
+
+    applyServiceParam();
   }, []);
 
   // Prefill from the instant quote tool (session storage + live event).
@@ -215,6 +222,14 @@ export function ContactForm({ embedded = false }: { embedded?: boolean }) {
       } catch (err) {
         console.error("Failed to trigger EmailJS notification", err);
       }
+
+      trackInquirySubmit({
+        serviceType: form.serviceType,
+        surface: embedded ? "inline_section" : "contact_page",
+        hasDate: Boolean(form.preferredDate) || dateUnknown,
+        usedQuote: Boolean(attachedQuote),
+        attachmentCount: attachmentUrls.length,
+      });
 
       setSuccessData({
         submissionId,
