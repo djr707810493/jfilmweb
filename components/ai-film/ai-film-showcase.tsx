@@ -11,18 +11,40 @@ import {
 } from "@/lib/video-embed";
 import type { AiFilmVideo } from "@/types/website";
 
+function readDeepLinkFilmId(): string {
+  if (typeof window === "undefined") return "";
+
+  const fromQuery = new URLSearchParams(window.location.search).get("film");
+  if (fromQuery?.trim()) return fromQuery.trim();
+
+  const hash = window.location.hash;
+  return hash.startsWith("#film-") ? hash.slice("#film-".length) : "";
+}
+
 export function AiFilmShowcase() {
   const [films, setFilms] = useState<AiFilmVideo[]>(createDefaultAiFilmFilms);
   const [active, setActive] = useState<AiFilmVideo | null>(null);
 
   useEffect(() => {
     let cancelled = false;
+    // Deep link: /ai-film/?film=alpine-vows (or #film-alpine-vows) opens a film.
+    const wanted = readDeepLinkFilmId();
+
+    function openIfMatched(list: AiFilmVideo[]) {
+      if (!wanted) return;
+      const match = list.find((film) => film.id === wanted);
+      if (match) setActive(match);
+    }
 
     getAiFilmFilms()
       .then((next) => {
-        if (!cancelled) setFilms(next);
+        if (cancelled) return;
+        setFilms(next);
+        openIfMatched(next);
       })
-      .catch(() => undefined);
+      .catch(() => {
+        if (!cancelled) openIfMatched(createDefaultAiFilmFilms());
+      });
 
     return () => {
       cancelled = true;
