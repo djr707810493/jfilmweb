@@ -34,7 +34,7 @@ export function PortfolioGridSection({
   showHeader = true,
 }: PortfolioGridSectionProps) {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  const [tab, setTab] = useState<GalleryTab>("photos");
+  const [tab, setTab] = useState<GalleryTab>("films");
   // `null` means "still loading"; resolves to [] when Firebase is absent.
   const [films, setFilms] = useState<HomepageFilm[] | null>(() =>
     isFirebaseConfigured() ? null : [],
@@ -134,8 +134,8 @@ export function PortfolioGridSection({
           >
             {(
               [
-                { id: "photos", label: "Photos" },
                 { id: "films", label: "Films" },
+                { id: "photos", label: "Photos" },
               ] as const
             ).map((item) => {
               const active = activeTab === item.id;
