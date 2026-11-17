@@ -240,7 +240,7 @@ export function PortfolioGridSection({
 
             <div className="mt-8 flex flex-col items-center gap-2 md:mt-10">
               <Link
-                href="/weddings"
+                href="/portfolio#film"
                 className="label-editorial tap-link border border-soft-black px-8 py-3 text-soft-black transition-colors hover:bg-soft-black hover:text-ivory"
               >
                 Browse Wedding Films

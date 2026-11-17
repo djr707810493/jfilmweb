@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { PortfolioProjectCard } from "@/components/portfolio/portfolio-project-card";
 import { usePortfolioProjects } from "@/hooks/use-portfolio-projects";
 import { projectHasVideo, projectHasImage } from "@/lib/firebase/portfolio";
@@ -13,9 +13,38 @@ const filters: { value: PortfolioFilter; label: string }[] = [
   { value: "film", label: "Film" },
 ];
 
+function filterFromHash(): PortfolioFilter | null {
+  if (typeof window === "undefined") return null;
+  const hash = window.location.hash.replace("#", "").toLowerCase();
+  if (hash === "film" || hash === "stills" || hash === "all") return hash;
+  return null;
+}
+
 export function PortfolioGallery() {
   const { projects, loading } = usePortfolioProjects();
   const [activeFilter, setActiveFilter] = useState<PortfolioFilter>("all");
+
+  // Deep links like /portfolio#film open straight into that filter.
+  useEffect(() => {
+    function syncFromHash() {
+      const next = filterFromHash();
+      if (next) setActiveFilter(next);
+    }
+
+    syncFromHash();
+    window.addEventListener("hashchange", syncFromHash);
+    return () => window.removeEventListener("hashchange", syncFromHash);
+  }, []);
+
+  const selectFilter = useCallback((value: PortfolioFilter) => {
+    setActiveFilter(value);
+    // Keep the URL shareable without triggering a scroll jump.
+    window.history.replaceState(
+      null,
+      "",
+      `${window.location.pathname}${window.location.search}${value === "all" ? "" : `#${value}`}`,
+    );
+  }, []);
 
   const filteredProjects = useMemo(() => {
     if (activeFilter === "all") return projects;
@@ -33,7 +62,7 @@ export function PortfolioGallery() {
             <button
               key={filter.value}
               type="button"
-              onClick={() => setActiveFilter(filter.value)}
+              onClick={() => selectFilter(filter.value)}
               className={`inline-flex min-h-[2.75rem] flex-col items-start justify-end whitespace-nowrap py-1 label-editorial transition-colors duration-300 ${
                 activeFilter === filter.value
                   ? "text-soft-black"
