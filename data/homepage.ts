@@ -2,15 +2,21 @@ import { placeholderImages } from "@/data/images";
 
 export const heroContent = {
   label: "J FILM STUDIO",
-  headline: "Utah Photographer & Videographer",
+  headline: "Weddings, by heart.",
   subheadline:
-    "Budget-friendly candid wedding photography and documentary videography. Honest moments, true-to-color storytelling — photo and film coverage for Park City, Salt Lake City, Moab, Zion, and beyond.",
+    "Utah wedding photography and candid documentary videography. Honest moments, true-to-color storytelling — photo and film coverage for Park City, Salt Lake City, Moab, Zion, and beyond.",
+  cta: [
+    { id: "portfolio", label: "View Portfolio", href: "/portfolio", style: "primary" as const },
+    { id: "contact", label: "Inquire About Your Date", href: "#contact", style: "secondary" as const },
+  ],
   image: {
-    alt: "Wedding couple holding champagne glasses",
-    mobile: "/images/placeholders/wedding-hero-mobile-900x1200.webp",
-    tablet: "/images/placeholders/wedding-hero-tablet-1400.webp",
-    desktop: "/images/placeholders/wedding-hero-desktop-1920.webp",
-    fallback: "/images/placeholders/wedding-hero-desktop-1920.webp",
+    alt: "Bride and groom holding hands from a vintage convertible, seen from above",
+    width: 1672,
+    height: 941,
+    mobile: "/images/hero/wedding-convertible-mobile.webp",
+    tablet: "/images/hero/wedding-convertible-tablet.webp",
+    desktop: "/images/hero/wedding-convertible-desktop.webp",
+    fallback: "/images/hero/wedding-convertible-desktop.webp",
   },
 } as const;
 
@@ -34,10 +40,10 @@ export const introContent = {
     "From alpine ceremonies in Park City to desert vows in Moab, every frame is guided by natural light, true color, and the belief that the most lasting images are the ones you didn't pose for.",
   ],
   image: {
-    src: placeholderImages.brideGroomMountain,
-    alt: "Park City wedding bride and groom portrait in natural light",
-    width: 800,
-    height: 1200,
+    src: "/images/hero/studio-portrait.webp",
+    alt: "Bride and groom signing their marriage certificate at an outdoor table",
+    width: 806,
+    height: 1000,
   },
 } as const;
 

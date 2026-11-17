@@ -9,9 +9,9 @@ import { createHomePageSchema } from "@/lib/schema";
 import { createPageMetadata } from "@/lib/seo";
 
 export const metadata = createPageMetadata({
-  title: "Utah Budget-Friendly Documentary-Style Wedding Photo & Video",
+  title: "Utah Wedding Photographer & Videographer | Candid Documentary Film",
   description:
-    "J FILM STUDIO — candid, documentary-style wedding photography and videography in Utah. Real moments, true-to-color storytelling, photo + film coverage that stays budget-friendly. Park City, Salt Lake City, Moab, Zion & beyond.",
+    "J FILM STUDIO — candid, documentary-style wedding photography and videography in Utah. Honest moments, true-to-color storytelling. Budget-friendly photo and film coverage for Park City, Salt Lake City, Moab, Zion, and beyond.",
   path: "/",
   ogImage: "/og-home.jpg",
 });
