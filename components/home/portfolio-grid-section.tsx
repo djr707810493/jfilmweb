@@ -93,6 +93,10 @@ export function PortfolioGridSection({
   // Nothing starred in the dashboard yet → keep the gallery photo-only.
   const showTabs = playableFilms.length > 0;
   const activeTab: GalleryTab = showTabs ? tab : "photos";
+  // While the featured films are still loading from Firestore, don't render
+  // the photo grid — otherwise home visitors download a photo wall that
+  // flashes away the moment the Films tab reveals itself.
+  const filmsLoaded = films !== null;
 
   const frames = featuredGalleryPhotos;
   const visibleFrames = frames.slice(0, visibleCount);
@@ -159,7 +163,21 @@ export function PortfolioGridSection({
           </div>
         )}
 
-        {activeTab === "photos" && (
+        {!filmsLoaded && (
+          <div
+            className="mt-4 columns-2 gap-3 md:mt-8 md:columns-3 md:gap-5"
+            aria-hidden
+          >
+            {Array.from({ length: 6 }).map((_, index) => (
+              <div
+                key={index}
+                className="mb-3 aspect-[4/5] break-inside-avoid bg-taupe/10 md:mb-5"
+              />
+            ))}
+          </div>
+        )}
+
+        {activeTab === "photos" && filmsLoaded && (
           <>
             <div className="mt-4 columns-2 gap-3 md:mt-8 md:columns-3 md:gap-5">
               {visibleFrames.map((frame, index) => (
