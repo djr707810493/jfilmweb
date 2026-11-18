@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { WeddingStoryShowcase } from "@/components/weddings/wedding-story-showcase";
-import { useWeddingStory } from "@/hooks/use-wedding-stories";
+import { StoryTabs } from "@/components/weddings/story-tabs";
+import { useWeddingStory, useWeddingStories } from "@/hooks/use-wedding-stories";
 
 export function WeddingStoryPageClient({ slug }: { slug: string }) {
   const { story, loading } = useWeddingStory(slug);
+  const { stories: allStories } = useWeddingStories();
 
   if (loading) {
     return (
@@ -15,7 +17,7 @@ export function WeddingStoryPageClient({ slug }: { slug: string }) {
     );
   }
 
-  if (!story) {
+  if (!story || !allStories.length) {
     return (
       <div className="container-editorial section-y text-center">
         <p className="text-soft-black-muted">This story could not be found.</p>
@@ -38,6 +40,16 @@ export function WeddingStoryPageClient({ slug }: { slug: string }) {
         >
           All Wedding Stories
         </Link>
+      </div>
+
+      <div className="border-b border-taupe/40">
+        <div className="container-editorial">
+          <StoryTabs
+            stories={allStories}
+            activeSlug={slug}
+            mode="link"
+          />
+        </div>
       </div>
 
       <div className="section-y-compact md:section-y">
