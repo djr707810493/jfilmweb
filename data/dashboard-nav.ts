@@ -8,6 +8,8 @@ export type DashboardSectionId =
   | "website"
   | "quote"
   | "work"
+  | "users"
+  | "analytics"
   | "messages";
 
 export type DashboardNavItem = {
@@ -68,6 +70,20 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
     href: "/studio/dashboard/work",
     description: "Work orders and project progress",
     roles: ["admin", "client"],
+  },
+  {
+    id: "users",
+    label: "Users",
+    href: "/studio/dashboard/users",
+    description: "Manage client accounts and profile details",
+    roles: ["admin"],
+  },
+  {
+    id: "analytics",
+    label: "Analytics",
+    href: "/studio/dashboard/analytics",
+    description: "GA4 traffic, engagement, and conversion reports",
+    roles: ["admin"],
   },
   {
     id: "messages",

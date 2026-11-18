@@ -13,15 +13,19 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read: if request.auth != null && request.auth.uid == userId;
+      allow read: if isAdmin() || (request.auth != null && request.auth.uid == userId);
       allow create: if request.auth != null
         && request.auth.uid == userId
         && isValidUserProfile(request.resource.data, request.auth.token.email);
-      allow update: if request.auth != null
-        && request.auth.uid == userId
-        && resource.data.role == 'client'
-        && isValidUserProfile(request.resource.data, request.auth.token.email);
-      allow delete: if false;
+      allow update: if (isAdmin()
+          && resource.data.role == 'client'
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName'])
+          && optionalUserDisplayName(request.resource.data))
+        || (request.auth != null
+          && request.auth.uid == userId
+          && resource.data.role == 'client'
+          && isValidUserProfile(request.resource.data, request.auth.token.email));
+      allow delete: if isAdmin() && resource.data.role == 'client';
     }
 
     match /workOrders/{workOrderId} {

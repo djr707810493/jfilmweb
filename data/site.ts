@@ -1,3 +1,8 @@
+export const googleBusinessConfig = {
+  profileUrl: (process.env.NEXT_PUBLIC_GOOGLE_BUSINESS_URL ?? "").trim(),
+  reviewsUrl: (process.env.NEXT_PUBLIC_GOOGLE_REVIEWS_URL ?? "").trim(),
+} as const;
+
 export const siteConfig = {
   name: "J FILM STUDIO",
   tagline: "Candid moments. Documentary heart. Budget-friendly coverage.",

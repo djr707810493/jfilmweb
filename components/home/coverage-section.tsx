@@ -1,12 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { PortfolioVideo } from "@/components/portfolio/portfolio-video";
+import { useState } from "react";
+import { CoverageVideoButton } from "@/components/quote/coverage-video-button";
 import { QuoteModal } from "@/components/quote/quote-modal";
 import { coverageContent, coverageOptions } from "@/data/homepage";
 import { trackCoverageInquire } from "@/lib/analytics";
-import { getCoverageVideo } from "@/lib/firebase/website";
 
 function CrewMarks({ count }: { count: number }) {
   return (
@@ -22,25 +21,7 @@ function CrewMarks({ count }: { count: number }) {
 }
 
 export function CoverageSection() {
-  const [videoSrc, setVideoSrc] = useState("");
-  const [videoPoster, setVideoPoster] = useState("");
-  const [videoTitle, setVideoTitle] = useState("");
   const [quoteOpen, setQuoteOpen] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    getCoverageVideo()
-      .then((video) => {
-        if (cancelled || !video.src) return;
-        setVideoSrc(video.src);
-        setVideoPoster(video.poster);
-        setVideoTitle(video.title);
-      })
-      .catch(() => undefined);
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   return (
     <section
@@ -56,26 +37,17 @@ export function CoverageSection() {
           <p className="mt-3 text-[0.8125rem] leading-relaxed text-soft-black-muted md:mt-5 md:text-base">
             {coverageContent.body}
           </p>
-        </div>
 
-        {videoSrc ? (
-          <div className="mt-8 md:mt-12">
-            <PortfolioVideo
-              media={{
-                type: "video",
-                src: videoSrc,
-                poster: videoPoster,
-                alt: videoTitle || "Coverage packages explained",
-                title: videoTitle || undefined,
-              }}
-              layout="facade"
-              className="border border-taupe/40"
+          <div className="mt-6 flex flex-wrap items-center gap-3 md:mt-8">
+            <span className="text-[0.8125rem] text-soft-black-muted md:text-sm">
+              Want the options explained in 60 seconds?
+            </span>
+            <CoverageVideoButton
+              variant="inline"
+              label="Watch coverage explainer"
             />
-            {videoTitle ? (
-              <p className="label-editorial mt-3 text-taupe">{videoTitle}</p>
-            ) : null}
           </div>
-        ) : null}
+        </div>
 
         <div className="mt-8 grid gap-3 sm:mt-10 sm:grid-cols-2 sm:gap-4 md:mt-14 md:gap-6 lg:grid-cols-4">
           {coverageOptions.map((option) => {

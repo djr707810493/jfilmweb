@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { siteConfig } from "@/data/site";
+import { googleBusinessConfig, siteConfig } from "@/data/site";
 
 export function SiteFooter() {
   const year = new Date().getFullYear();
@@ -74,6 +74,30 @@ export function SiteFooter() {
                 {siteConfig.address.addressLocality},{" "}
                 {siteConfig.address.addressRegion}
               </li>
+              {googleBusinessConfig.profileUrl && (
+                <li>
+                  <a
+                    href={googleBusinessConfig.profileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="tap-link transition-colors duration-300 active:text-soft-black md:hover:text-soft-black"
+                  >
+                    Google Business Profile
+                  </a>
+                </li>
+              )}
+              {(googleBusinessConfig.reviewsUrl || googleBusinessConfig.profileUrl) && (
+                <li>
+                  <a
+                    href={googleBusinessConfig.reviewsUrl || googleBusinessConfig.profileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="tap-link transition-colors duration-300 active:text-soft-black md:hover:text-soft-black"
+                  >
+                    Leave us a Google review
+                  </a>
+                </li>
+              )}
             </ul>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import { ContactSection } from "@/components/home/contact-section";
 import { CoverageSection } from "@/components/home/coverage-section";
+import { GoogleReviewsSection } from "@/components/home/google-reviews-section";
 import { HeroSection } from "@/components/home/hero-section";
 import { IntroSection } from "@/components/home/intro-section";
 import { PortfolioGridSection } from "@/components/home/portfolio-grid-section";
@@ -24,6 +25,7 @@ export default function HomePage() {
       <HeroSection />
       <IntroSection />
       <PortfolioGridSection />
+      <GoogleReviewsSection />
       <ServicesSection />
       <CoverageSection />
       <ContactSection />

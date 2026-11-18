@@ -9,7 +9,13 @@ import { isDirectVideoFileUrl, parseVideoEmbedUrl } from "@/lib/video-embed";
  * (managed in Dashboard → Website → Coverage video).
  * Renders nothing if no video is configured.
  */
-export function CoverageVideoButton({ label }: { label: string }) {
+export function CoverageVideoButton({
+  label,
+  variant = "icon",
+}: {
+  label: string;
+  variant?: "icon" | "inline";
+}) {
   const [open, setOpen] = useState(false);
   const [src, setSrc] = useState<string | null>(null);
 
@@ -33,6 +39,30 @@ export function CoverageVideoButton({ label }: { label: string }) {
   }, []);
 
   if (src === null) return null;
+
+  if (variant === "inline") {
+    return (
+      <>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpen(true);
+          }}
+          aria-label={`${label} — watch coverage explainer`}
+          className="tap-link inline-flex items-center gap-2 rounded-full border border-soft-black/25 bg-ivory px-4 py-2 text-[0.8125rem] text-soft-black transition-colors hover:border-soft-black hover:bg-ivory-dark"
+        >
+          <span
+            className="flex size-5 shrink-0 items-center justify-center rounded-full bg-red-700 text-[11px] font-bold text-white"
+          >
+            ?
+          </span>
+          <span>Watch: what’s the difference?</span>
+        </button>
+        {open ? <CoverageVideoModal src={src} onClose={() => setOpen(false)} /> : null}
+      </>
+    );
+  }
 
   return (
     <>

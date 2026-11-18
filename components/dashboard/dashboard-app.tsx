@@ -9,6 +9,8 @@ import { AdminInquiriesPanel } from "@/components/dashboard/admin-dashboard";
 import { AdminStoriesPanel } from "@/components/dashboard/admin-stories-panel";
 import { AdminWebsitePanel } from "@/components/dashboard/admin-website-panel";
 import { AdminQuotePanel } from "@/components/dashboard/admin-quote-panel";
+import { AdminUsersPanel } from "@/components/dashboard/admin-users-panel";
+import { AdminAnalyticsPanel } from "@/components/dashboard/admin-analytics-panel";
 import { AdminWorkPanel } from "@/components/dashboard/admin-work-panel";
 import { ClientInquiriesPanel } from "@/components/dashboard/client-inquiries-panel";
 import { ClientWorkPanel } from "@/components/dashboard/client-work-panel";
@@ -42,7 +44,7 @@ function DashboardContent({
   const [newInquiryCount, setNewInquiryCount] = useState(0);
 
   useEffect(() => {
-    if (!isAdmin && (section === "gallery" || section === "stories" || section === "website" || section === "quote" || section === "messages")) {
+    if (!isAdmin && (section === "gallery" || section === "stories" || section === "website" || section === "quote" || section === "messages" || section === "users" || section === "analytics")) {
       router.replace("/studio/dashboard");
     }
   }, [isAdmin, router, section]);
@@ -118,6 +120,10 @@ function DashboardContent({
       return <AdminWebsitePanel />;
     case "quote":
       return <AdminQuotePanel />;
+    case "users":
+      return <AdminUsersPanel currentUserId={user.uid} />;
+    case "analytics":
+      return <AdminAnalyticsPanel />;
     case "messages":
       return <ComingSoonPanel section={section} />;
     case "work":

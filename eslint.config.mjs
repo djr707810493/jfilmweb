@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Firebase deploy artifacts (bundled builds of .next / hosting output).
     ".firebase/**",
+    // Cloud Functions is a separate TypeScript project with its own tsconfig.
+    "functions/**",
   ]),
 ]);
 
