@@ -37,7 +37,7 @@ export function WeddingStoryPageClient({ slug }: { slug: string }) {
   const { story, loading } = useWeddingStory(slug);
   const { stories: allStories } = useWeddingStories();
 
-  if (loading) return <StoryLoading />;
+  if (loading && !story) return <StoryLoading />;
 
   if (!story) {
     return (

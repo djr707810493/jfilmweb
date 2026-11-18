@@ -1,4 +1,6 @@
 import { WeddingsPageClient } from "@/components/weddings/weddings-page-client";
+import { SeoJsonLd } from "@/components/seo-json-ld";
+import { createBreadcrumbListSchema } from "@/lib/schema";
 import { createPageMetadata } from "@/lib/seo";
 
 export const metadata = createPageMetadata({
@@ -10,5 +12,15 @@ export const metadata = createPageMetadata({
 });
 
 export default function WeddingsPage() {
-  return <WeddingsPageClient />;
+  return (
+    <>
+      <SeoJsonLd
+        data={createBreadcrumbListSchema([
+          { label: "Home", href: "/" },
+          { label: "Stories", href: "/weddings" },
+        ])}
+      />
+      <WeddingsPageClient />
+    </>
+  );
 }

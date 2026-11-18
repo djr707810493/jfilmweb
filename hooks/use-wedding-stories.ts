@@ -5,15 +5,26 @@ import {
   getPublishedWeddingStories,
   getWeddingStoryFromFirestore,
 } from "@/lib/firebase/story";
+import {
+  weddingStories as staticStories,
+  getWeddingStoryBySlug,
+} from "@/data/wedding-stories";
 import type { WeddingStory } from "@/types/wedding-story";
 
+/**
+ * Static stories render server-side so crawlers always see real content.
+ * Firestore replaces them once loaded; if the fetch fails the static copy stays.
+ */
 type StoriesState = {
   stories: WeddingStory[];
   loading: boolean;
 };
 
 export function useWeddingStories() {
-  const [state, setState] = useState<StoriesState>({ stories: [], loading: true });
+  const [state, setState] = useState<StoriesState>({
+    stories: staticStories,
+    loading: true,
+  });
   const [reloadCount, setReloadCount] = useState(0);
 
   useEffect(() => {
@@ -21,10 +32,14 @@ export function useWeddingStories() {
 
     getPublishedWeddingStories()
       .then((results) => {
-        if (!cancelled) setState({ stories: results, loading: false });
+        if (cancelled) return;
+        setState({
+          stories: results.length > 0 ? results : staticStories,
+          loading: false,
+        });
       })
       .catch(() => {
-        if (!cancelled) setState({ stories: [], loading: false });
+        if (!cancelled) setState({ stories: staticStories, loading: false });
       });
 
     return () => {
@@ -47,7 +62,7 @@ type StoryState = {
 
 export function useWeddingStory(slug: string | null) {
   const [state, setState] = useState<StoryState>({
-    story: null,
+    story: slug ? (getWeddingStoryBySlug(slug) ?? null) : null,
     loading: Boolean(slug),
   });
 
@@ -57,10 +72,19 @@ export function useWeddingStory(slug: string | null) {
 
     getWeddingStoryFromFirestore(slug)
       .then((remote) => {
-        if (!cancelled) setState({ story: remote ?? null, loading: false });
+        if (cancelled) return;
+        setState({
+          story: remote ?? getWeddingStoryBySlug(slug) ?? null,
+          loading: false,
+        });
       })
       .catch(() => {
-        if (!cancelled) setState({ story: null, loading: false });
+        if (!cancelled) {
+          setState({
+            story: getWeddingStoryBySlug(slug) ?? null,
+            loading: false,
+          });
+        }
       });
 
     return () => {

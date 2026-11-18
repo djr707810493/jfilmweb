@@ -17,10 +17,12 @@ export const metadata = createPageMetadata({
   ogImage: "/og-home.jpg",
 });
 
-export default function HomePage() {
+export default async function HomePage() {
+  const schema = await createHomePageSchema();
+
   return (
     <>
-      <SeoJsonLd data={createHomePageSchema()} />
+      <SeoJsonLd data={schema} />
 
       <HeroSection />
       <IntroSection />

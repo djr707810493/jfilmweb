@@ -3,13 +3,16 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { SiteImage } from "@/components/site-image";
+import { SeoJsonLd } from "@/components/seo-json-ld";
 import { PortfolioVideo } from "@/components/portfolio/portfolio-video";
 import { useSectionDwell } from "@/components/home/use-section-dwell";
 import { featuredGalleryPhotos } from "@/data/featured-gallery";
+import { siteConfig } from "@/data/site";
 import { getPublishedPortfolioProjects } from "@/lib/firebase/portfolio";
 import { isFirebaseConfigured } from "@/lib/firebase";
 import { trackViewFullPortfolioClick } from "@/lib/analytics";
 import { isDirectVideoFileUrl, isValidVideoEmbedUrl } from "@/lib/video-embed";
+import { createVideoObjectSchema, parseDurationToIso } from "@/lib/schema-video";
 
 type PortfolioGridSectionProps = {
   showHeader?: boolean;
@@ -233,7 +236,30 @@ export function PortfolioGridSection({
         )}
 
         {activeTab === "films" && (
-          <div className="mt-4 md:mt-8">
+          <>
+            {playableFilms.length > 0 && (
+              <SeoJsonLd
+                data={playableFilms.map((film) =>
+                  createVideoObjectSchema({
+                    id: `homepage-${film.id}`,
+                    name: film.title,
+                    description: film.subtitle,
+                    embedUrl: film.src,
+                    ...(film.poster
+                      ? {
+                          thumbnailUrl: film.poster.startsWith("http")
+                            ? film.poster
+                            : `${siteConfig.url}${film.poster}`,
+                        }
+                      : {}),
+                    ...(film.duration
+                      ? { duration: parseDurationToIso(film.duration) }
+                      : {}),
+                  }),
+                )}
+              />
+            )}
+            <div className="mt-4 md:mt-8">
             <ul className="grid gap-4 sm:grid-cols-2 md:gap-6">
               {visibleFilms.map((film) => (
                 <li key={film.id}>
@@ -263,38 +289,36 @@ export function PortfolioGridSection({
               ))}
             </ul>
 
-            {hasMoreFilms && (
+            {hasMoreFilms ? (
               <div className="mt-8 flex flex-col items-center gap-2 md:mt-10">
                 <button
                   type="button"
                   onClick={() => setFilmsExpanded((expanded) => !expanded)}
                   className="label-editorial tap-link border border-soft-black px-8 py-3 text-soft-black transition-colors hover:bg-soft-black hover:text-ivory"
                 >
-                  {filmsExpanded
-                    ? `Show less (${FILMS_PAGE_SIZE} films)`
-                    : `Show all ${playableFilms.length} films`}
+                  {filmsExpanded ? "Show Less" : "Show More"}
                 </button>
-                {!filmsExpanded ? (
+                {filmsExpanded ? (
                   <Link
                     href="/portfolio#film"
-                    className="label-editorial tap-link border border-soft-black px-8 py-3 text-soft-black transition-colors hover:bg-soft-black hover:text-ivory"
+                    className="label-editorial link-underline tap-link text-soft-black-muted transition-colors hover:text-soft-black"
                   >
-                    Browse Wedding Films
+                    Browse All Wedding Films
                   </Link>
                 ) : null}
               </div>
-            )}
-            {!hasMoreFilms && (
+            ) : (
               <div className="mt-8 flex flex-col items-center gap-2 md:mt-10">
                 <Link
                   href="/portfolio#film"
                   className="label-editorial tap-link border border-soft-black px-8 py-3 text-soft-black transition-colors hover:bg-soft-black hover:text-ivory"
                 >
-                  Browse Wedding Films
+                  Browse All Wedding Films
                 </Link>
               </div>
             )}
-          </div>
+            </div>
+          </>
         )}
       </div>
     </section>
