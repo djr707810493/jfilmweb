@@ -24,7 +24,7 @@ export const siteConfig = {
     instagram: "https://www.instagram.com/jfilm_studio_usa/",
   },
   nav: [
-    { label: "Weddings", href: "/weddings" },
+    { label: "Stories", href: "/weddings" },
     { label: "Portfolio", href: "/portfolio" },
     { label: "AI Film", href: "/ai-film" },
     { label: "About", href: "/about" },
