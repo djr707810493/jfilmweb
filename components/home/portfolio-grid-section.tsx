@@ -29,6 +29,8 @@ type HomepageFilm = {
 };
 
 const PAGE_SIZE = 10;
+/** Homepage films fold: show this many before the "Show all" button. */
+const FILMS_PAGE_SIZE = 6;
 
 export function PortfolioGridSection({
   showHeader = true,
@@ -97,6 +99,11 @@ export function PortfolioGridSection({
   // the photo grid — otherwise home visitors download a photo wall that
   // flashes away the moment the Films tab reveals itself.
   const filmsLoaded = films !== null;
+  const [filmsExpanded, setFilmsExpanded] = useState(false);
+  const visibleFilms = filmsExpanded
+    ? playableFilms
+    : playableFilms.slice(0, FILMS_PAGE_SIZE);
+  const hasMoreFilms = playableFilms.length > FILMS_PAGE_SIZE;
 
   const frames = featuredGalleryPhotos;
   const visibleFrames = frames.slice(0, visibleCount);
@@ -228,7 +235,7 @@ export function PortfolioGridSection({
         {activeTab === "films" && (
           <div className="mt-4 md:mt-8">
             <ul className="grid gap-4 sm:grid-cols-2 md:gap-6">
-              {playableFilms.map((film) => (
+              {visibleFilms.map((film) => (
                 <li key={film.id}>
                   <PortfolioVideo
                     media={{
@@ -256,14 +263,37 @@ export function PortfolioGridSection({
               ))}
             </ul>
 
-            <div className="mt-8 flex flex-col items-center gap-2 md:mt-10">
-              <Link
-                href="/portfolio#film"
-                className="label-editorial tap-link border border-soft-black px-8 py-3 text-soft-black transition-colors hover:bg-soft-black hover:text-ivory"
-              >
-                Browse Wedding Films
-              </Link>
-            </div>
+            {hasMoreFilms && (
+              <div className="mt-8 flex flex-col items-center gap-2 md:mt-10">
+                <button
+                  type="button"
+                  onClick={() => setFilmsExpanded((expanded) => !expanded)}
+                  className="label-editorial tap-link border border-soft-black px-8 py-3 text-soft-black transition-colors hover:bg-soft-black hover:text-ivory"
+                >
+                  {filmsExpanded
+                    ? `Show less (${FILMS_PAGE_SIZE} films)`
+                    : `Show all ${playableFilms.length} films`}
+                </button>
+                {!filmsExpanded ? (
+                  <Link
+                    href="/portfolio#film"
+                    className="label-editorial tap-link border border-soft-black px-8 py-3 text-soft-black transition-colors hover:bg-soft-black hover:text-ivory"
+                  >
+                    Browse Wedding Films
+                  </Link>
+                ) : null}
+              </div>
+            )}
+            {!hasMoreFilms && (
+              <div className="mt-8 flex flex-col items-center gap-2 md:mt-10">
+                <Link
+                  href="/portfolio#film"
+                  className="label-editorial tap-link border border-soft-black px-8 py-3 text-soft-black transition-colors hover:bg-soft-black hover:text-ivory"
+                >
+                  Browse Wedding Films
+                </Link>
+              </div>
+            )}
           </div>
         )}
       </div>

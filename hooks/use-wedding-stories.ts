@@ -5,16 +5,15 @@ import {
   getPublishedWeddingStories,
   getWeddingStoryFromFirestore,
 } from "@/lib/firebase/story";
-import {
-  weddingStories as staticStories,
-  getWeddingStoryBySlug,
-} from "@/data/wedding-stories";
 import type { WeddingStory } from "@/types/wedding-story";
 
+type StoriesState = {
+  stories: WeddingStory[];
+  loading: boolean;
+};
+
 export function useWeddingStories() {
-  const [stories, setStories] = useState<WeddingStory[]>(staticStories);
-  const [loading, setLoading] = useState(true);
-  const [source, setSource] = useState<"static" | "firestore">("static");
+  const [state, setState] = useState<StoriesState>({ stories: [], loading: true });
   const [reloadCount, setReloadCount] = useState(0);
 
   useEffect(() => {
@@ -22,23 +21,10 @@ export function useWeddingStories() {
 
     getPublishedWeddingStories()
       .then((results) => {
-        if (cancelled) return;
-        if (results.length > 0) {
-          setStories(results);
-          setSource("firestore");
-        } else {
-          setStories(staticStories);
-          setSource("static");
-        }
+        if (!cancelled) setState({ stories: results, loading: false });
       })
       .catch(() => {
-        if (!cancelled) {
-          setStories(staticStories);
-          setSource("static");
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setState({ stories: [], loading: false });
       });
 
     return () => {
@@ -47,17 +33,23 @@ export function useWeddingStories() {
   }, [reloadCount]);
 
   const reload = useCallback(() => {
-    setLoading(true);
+    setState((current) => ({ ...current, loading: true }));
     setReloadCount((count) => count + 1);
   }, []);
 
-  return { stories, loading, source, reload };
+  return { ...state, reload };
 }
 
+type StoryState = {
+  story: WeddingStory | null;
+  loading: boolean;
+};
+
 export function useWeddingStory(slug: string | null) {
-  const staticStory = slug ? (getWeddingStoryBySlug(slug) ?? null) : null;
-  const [remoteStory, setRemoteStory] = useState<WeddingStory | null>(null);
-  const [resolved, setResolved] = useState(false);
+  const [state, setState] = useState<StoryState>({
+    story: null,
+    loading: Boolean(slug),
+  });
 
   useEffect(() => {
     if (!slug) return;
@@ -65,11 +57,10 @@ export function useWeddingStory(slug: string | null) {
 
     getWeddingStoryFromFirestore(slug)
       .then((remote) => {
-        if (!cancelled && remote) setRemoteStory(remote);
+        if (!cancelled) setState({ story: remote ?? null, loading: false });
       })
-      .catch(() => undefined)
-      .finally(() => {
-        if (!cancelled) setResolved(true);
+      .catch(() => {
+        if (!cancelled) setState({ story: null, loading: false });
       });
 
     return () => {
@@ -77,7 +68,5 @@ export function useWeddingStory(slug: string | null) {
     };
   }, [slug]);
 
-  const story = remoteStory ?? staticStory;
-
-  return { story, loading: !story && !resolved };
+  return state;
 }
