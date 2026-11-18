@@ -3,8 +3,9 @@ import { placeholderImages } from "@/data/images";
 export const heroContent = {
   label: "J FILM STUDIO",
   headline: "Weddings, by heart.",
+  serviceLine: "Utah Wedding Photography & Films",
   subheadline:
-    "Utah wedding photography and candid documentary videography. Honest moments, true-to-color storytelling — photo and film coverage for Park City, Salt Lake City, Moab, Zion, and beyond.",
+    "Candid, documentary coverage for Park City, Salt Lake City, Moab, Zion, and beyond — honest moments, true-to-color storytelling, photo and film from the same quiet presence.",
   cta: [
     { id: "portfolio", label: "View Portfolio", href: "/portfolio", style: "primary" as const },
     { id: "contact", label: "Inquire About Your Date", href: "#contact", style: "secondary" as const },
@@ -119,6 +120,8 @@ export const coverageOptions = [
     crew: "One artist · one medium",
     operators: 1,
     featured: false,
+    priceIds: ["photo", "video"],
+    startingHours: 4,
     description:
       "Choose photography or a wedding film. One medium, fully documented — calm, documentary coverage without stretching the day.",
     includes: [
@@ -135,6 +138,10 @@ export const coverageOptions = [
     crew: "One operator",
     operators: 1,
     featured: true,
+    priceIds: ["duo-1"],
+    startingHours: 5,
+    tradeoff:
+      "One person filming and shooting means a single point of view at a time. We prioritize stills during vows and portraits, film during the ceremony walk and speeches — you decide which moments count most.",
     description:
       "Stills and film from the same artist. One calm presence, both stories — the most requested way to have photo and video without a full crew.",
     includes: [
@@ -151,6 +158,8 @@ export const coverageOptions = [
     crew: "Two operators",
     operators: 2,
     featured: false,
+    priceIds: ["duo-2"],
+    startingHours: 6,
     description:
       "A dedicated photographer and a dedicated videographer. Simultaneous stills and film, so ceremony, vows, and reception are never split between cameras.",
     includes: [
@@ -162,7 +171,8 @@ export const coverageOptions = [
   {
     id: "ai-film",
     number: "04",
-    budgetLabel: "From $149",
+    budgetLabel: "One-time",
+    fixedPriceLabel: "From $149",
     title: "AI Film",
     crew: "No shoot required",
     operators: 0,
@@ -211,6 +221,7 @@ export const ctaContent = {
   label: "Inquire",
   heading: "Let's create something honest, beautiful, and entirely yours.",
   body: "Tell us about your date, your location, and what matters most. We accept a limited number of weddings each year.",
+  responsePromise: "Replies within 24 hours — every inquiry, written by the studio, not a template.",
   image: {
     src: placeholderImages.receptionCelebration,
     alt: "Black and white wedding reception flash party photography",

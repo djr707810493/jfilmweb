@@ -5,7 +5,7 @@ import { heroContent } from "@/data/homepage";
 import type { HeroButton } from "@/types/website";
 
 export function HeroSection() {
-  const { label, headline, subheadline: body, cta: buttons } = heroContent;
+  const { label, headline, serviceLine, subheadline: body, cta: buttons } = heroContent;
   const { image } = heroContent;
 
   return (
@@ -27,7 +27,6 @@ export function HeroSection() {
             type="image/webp"
           />
           <source srcSet={image.desktop} type="image/webp" />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={image.fallback}
             alt={image.alt}
@@ -58,7 +57,11 @@ export function HeroSection() {
           <h1
             className="font-display text-[clamp(3rem,8.5vw,6.5rem)] leading-[1.04] tracking-[-0.03em] text-ivory"
           >
-            {headline}
+            <span className="block">{headline}</span>
+            <span className="mt-4 flex items-center gap-3 text-[clamp(0.6875rem,1.5vw,0.875rem)] font-normal italic leading-snug tracking-[0.16em] text-ivory/75 uppercase md:mt-6">
+              <span className="h-[1px] w-8 shrink-0 bg-ivory/40" aria-hidden="true" />
+              {serviceLine}
+            </span>
           </h1>
 
           {body ? (

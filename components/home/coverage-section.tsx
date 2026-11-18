@@ -4,8 +4,42 @@ import Link from "next/link";
 import { useState } from "react";
 import { CoverageVideoButton } from "@/components/quote/coverage-video-button";
 import { QuoteModal } from "@/components/quote/quote-modal";
+import { formatUSD } from "@/components/quote/quote-config";
+import { useQuoteRates } from "@/components/quote/use-quote-rates";
 import { coverageContent, coverageOptions } from "@/data/homepage";
 import { trackCoverageInquire } from "@/lib/analytics";
+
+function StartingPriceRow({
+  option,
+  rates,
+}: {
+  option: (typeof coverageOptions)[number];
+  rates: ReturnType<typeof useQuoteRates>;
+}) {
+  if (!("priceIds" in option) || !option.priceIds) return null;
+
+  const hours = "startingHours" in option ? Number(option.startingHours ?? 4) : 4;
+  const rate = Math.min(
+    ...option.priceIds.map(
+      (id) =>
+        rates.categories.find((category) => category.id === id)?.hourlyRate ??
+        Number.POSITIVE_INFINITY,
+    ),
+  );
+
+  if (!Number.isFinite(rate) || rate <= 0) return null;
+
+  return (
+    <p className="mt-3 flex items-baseline gap-2">
+      <span className="font-display text-lg text-soft-black">
+        From {formatUSD(rate * hours)}
+      </span>
+      <span className="text-[0.6875rem] tracking-wide uppercase text-taupe">
+        {hours} hrs
+      </span>
+    </p>
+  );
+}
 
 function CrewMarks({ count }: { count: number }) {
   return (
@@ -22,6 +56,7 @@ function CrewMarks({ count }: { count: number }) {
 
 export function CoverageSection() {
   const [quoteOpen, setQuoteOpen] = useState(false);
+  const rates = useQuoteRates();
 
   return (
     <section
@@ -90,6 +125,19 @@ export function CoverageSection() {
                 {option.crew}
               </p>
 
+              {"fixedPriceLabel" in option ? (
+                <p className="mt-3 flex items-baseline gap-2">
+                  <span className="font-display text-lg text-soft-black">
+                    {option.fixedPriceLabel}
+                  </span>
+                  <span className="text-[0.6875rem] tracking-wide uppercase text-taupe">
+                    per service
+                  </span>
+                </p>
+              ) : (
+                <StartingPriceRow option={option} rates={rates} />
+              )}
+
               <p className="mt-4 text-[0.8125rem] leading-relaxed text-soft-black-muted md:mt-5 md:text-sm">
                 {option.description}
               </p>
@@ -105,6 +153,17 @@ export function CoverageSection() {
                 ))}
               </ul>
 
+              {"tradeoff" in option ? (
+                <div className="mt-5 border-l-2 border-soft-black/30 pl-4">
+                  <p className="label-editorial mb-1 text-soft-black">
+                    The trade-off
+                  </p>
+                  <p className="text-[0.75rem] leading-relaxed text-soft-black-muted">
+                    {option.tradeoff}
+                  </p>
+                </div>
+              ) : null}
+
               <Link
                 href={href}
                 onClick={() =>
@@ -118,6 +177,11 @@ export function CoverageSection() {
             );
           })}
         </div>
+
+        <p className="mt-4 text-[0.75rem] leading-relaxed text-taupe md:mt-6">
+          Starting prices reflect our shortest common booking. Final quotes vary
+          with date, location, and hours — the instant quote tool is exact.
+        </p>
 
         <p className="mt-8 max-w-xl text-[0.8125rem] leading-relaxed text-soft-black-muted md:mt-10 md:text-sm">
           Not sure which fits? Tell us your date and budget — we&apos;ll recommend

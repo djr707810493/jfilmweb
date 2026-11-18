@@ -530,6 +530,10 @@ export function ContactForm({ embedded = false }: { embedded?: boolean }) {
       >
         {status === "submitting" ? "Sending…" : "Send Inquiry"}
       </button>
+
+      <p className="mt-3 text-xs leading-relaxed text-muted">
+        We reply within 24 hours — usually much sooner.
+      </p>
     </form>
   );
 }
